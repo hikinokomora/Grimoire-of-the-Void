@@ -656,7 +656,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d10ca50fed0e01545940d1c9268b8b7e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardDraw
-  prefab: {fileID: 5998391511153850783, guid: f3b176dbabf88c4479d1b7e288a1e288, type: 3}
+  prefab:
+  - {fileID: 5998391511153850783, guid: f3b176dbabf88c4479d1b7e288a1e288, type: 3}
   spawnLocation: {fileID: 1042305447}
 --- !u!1 &1181651101
 GameObject:
