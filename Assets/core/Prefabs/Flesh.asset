@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 758f3d11c90438f4bb16c50e6d079c6b, type: 3}
   m_Name: Flesh
   m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.OccultAspect
-  ID: 
-  DisplayName: 
+  ID: flesh
+  DisplayName: flesh
+  prefab: {fileID: -1434441539027678862, guid: 7c5f608b7b7e6484ab3856aa75874189, type: 3}

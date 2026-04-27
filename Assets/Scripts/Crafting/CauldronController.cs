@@ -20,6 +20,10 @@ namespace GrimoireOfTheVoid.Crafting
         [Tooltip("Точка, в которой появится новый предмет (например, над котлом).")]
         [SerializeField] private Transform spawnPoint;
 
+        [Header("Эффекты")]
+        [Tooltip("Эффект дыма (Particle System), который сработает при сбросе котла или неудачном крафте.")]
+        [SerializeField] private ParticleSystem resetSmokeEffect;
+
         // TODO: Переменные для расширения под таймер
         // [SerializeField] private float defaultCraftTime = 2f;
         // private float currentCraftTimer = 0f;
@@ -103,6 +107,12 @@ namespace GrimoireOfTheVoid.Crafting
                     Debug.Log($"[Cauldron] ✓ УСПЕХ! Найден рецепт. Крафтим: {recipe.output.DisplayName}!");
                     SpawnResult(recipe.output);
                     
+                    // РАЗБЛОКИРУЕМ АСПЕКТ В КНИГЕ
+                    if (AspectManager.Instance != null)
+                    {
+                        AspectManager.Instance.UnlockAspect(recipe.output);
+                    }
+                    
                     // После успешного крафта очищаем котел
                     ClearIngredients();
                     return; // прерываем цикл, так как котел уже очищен
@@ -154,6 +164,12 @@ namespace GrimoireOfTheVoid.Crafting
             {
                 Debug.Log($"[Cauldron] Крафт успешен! Получен результат: {resultData.DisplayName}");
                 SpawnResult(resultData);
+                
+                // РАЗБЛОКИРУЕМ АСПЕКТ В КНИГЕ
+                if (AspectManager.Instance != null)
+                {
+                    AspectManager.Instance.UnlockAspect(resultData);
+                }
             }
             else
             {
@@ -177,19 +193,33 @@ namespace GrimoireOfTheVoid.Crafting
                 return;
             }
 
-            // Загружаем уникальный префаб аспекта по его ID из папки Resources
-            AspectObject loadedPrefab = Resources.Load<AspectObject>($"AspectPrefabs/{resultData.ID}");
-
-            if (loadedPrefab != null)
+            if (resultData.prefab != null)
             {
-                AspectObject newObject = Instantiate(loadedPrefab, spawnPoint.position, spawnPoint.rotation);
+                AspectObject newObject = Instantiate(resultData.prefab, spawnPoint.position, spawnPoint.rotation);
                 newObject.aspectData = resultData;
             }
             else
             {
-                Debug.LogError($"[Cauldron] Ошибка! Не удалось найти префаб для ID '{resultData.ID}'. " +
-                               $"Убедитесь, что префаб лежит ровно по пути: 'Assets/Resources/AspectPrefabs/{resultData.ID}.prefab'");
+                Debug.LogError($"[Cauldron] Ошибка! У аспекта '{resultData.DisplayName}' ({resultData.ID}) не назначен 3D Префаб (поле Prefab в ScriptableObject)!");
             }
+        }
+
+        /// <summary>
+        /// Сбрасывает содержимое котла принудительно (вызывается рычагом) и проигрывает дым.
+        /// </summary>
+        public void ResetCauldron()
+        {
+            if (currentIngredients.Count > 0)
+            {
+                ClearIngredients();
+            }
+
+            if (resetSmokeEffect != null)
+            {
+                resetSmokeEffect.Play();
+            }
+            
+            Debug.Log("[Cauldron] Котел принудительно сброшен. Пуфф!");
         }
 
         /// <summary>

@@ -36,7 +36,6 @@ namespace GrimoireOfTheVoid.Crafting
             // ЛКМ Нажата - пытаемся взять объект
             if (Mouse.current.leftButton.wasPressedThisFrame)
             {
-                Debug.Log($"[DragAndDrop] Клик ЛКМ по координатам экрана: {mousePos}");
                 TryPickUp(mousePos);
             }
             // ЛКМ Удерживается - тащим объект
@@ -70,8 +69,22 @@ namespace GrimoireOfTheVoid.Crafting
             // Увеличиваем дистанцию луча с 20f до 1000f на случай, если камера далеко
             if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
             {
-                Debug.Log($"[DragAndDrop] Луч столкнулся с объектом: {hit.collider.gameObject.name}");
-                
+                // 1. Проверяем, не кликнули ли мы по рычагу
+                if (hit.collider.TryGetComponent<CauldronLever>(out CauldronLever lever))
+                {
+                    lever.Pull();
+                    return; // Прерываем логику перетаскивания
+                }
+
+                // 3. НОВОЕ: Проверяем, не кликнули ли мы по кнопке книги
+                if (hit.collider.TryGetComponent<PhysicalBookButton>(out PhysicalBookButton bookButton))
+                {
+                    Debug.Log($"[DragAndDrop] Найден клик по книге через CraftingInteractor: {(bookButton.isNextPage ? "Вперед" : "Назад")}");
+                    bookButton.ForceClick();
+                    return;
+                }
+
+                // 2. Иначе проверяем, можно ли взять этот объект
                 if (hit.collider.TryGetComponent<AspectObject>(out AspectObject aspect))
                 {
                     Debug.Log($"[DragAndDrop] Взят объект: {(aspect.aspectData != null ? aspect.aspectData.DisplayName : "Без данных")}");
