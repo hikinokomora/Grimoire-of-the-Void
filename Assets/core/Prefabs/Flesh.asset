@@ -15,3 +15,8 @@ MonoBehaviour:
   ID: flesh
   DisplayName: flesh
   prefab: {fileID: -1434441539027678862, guid: 7c5f608b7b7e6484ab3856aa75874189, type: 3}
+  description: "\u041F\u0438\u0441\u044C\u043A\u0430"
+  aspectIcon: {fileID: 0}
+  ingredientsText: "\u041A\u043E\u0441\u0442\u044C + \u043A\u0440\u043E\u0432\u044C
+    (3)"
+  isUnlocked: 0

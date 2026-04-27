@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3500dabf7d3c97140969ccdee5fe4a4a, type: 3}
   m_Name: BloodData
   m_EditorClassIdentifier: Assembly-CSharp::AspectData
-  aspectName: 
-  description: 
+  aspectName: "\u041A\u0420\u041E\u041E\u041E\u0412\u042C"
+  description: "\u0412\u0421\u042F \u042D\u0422\u0410 \u041A\u0420\u041E\u0412\u042C
+    \u041C\u041D\u0415\u0415\u0415"
   aspectIcon: {fileID: 0}
-  isUnlocked: 0
+  isUnlocked: 1
