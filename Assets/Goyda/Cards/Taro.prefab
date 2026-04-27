@@ -1,0 +1,163 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &386372592340132898
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8363333444387365768}
+  - component: {fileID: 1312883074449439266}
+  - component: {fileID: 3780067049046449617}
+  m_Layer: 0
+  m_Name: StopkaCards
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8363333444387365768
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 386372592340132898}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.02, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2962024014378314480}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &1312883074449439266
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 386372592340132898}
+  m_Mesh: {fileID: 316467124727398786, guid: aa52d6023cfa1714b8eef0da0322f994, type: 3}
+--- !u!23 &3780067049046449617
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 386372592340132898}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 4c9d0b78d4f3de14a84a1a62a81747bd, type: 2}
+  - {fileID: 2100000, guid: 4c9d0b78d4f3de14a84a1a62a81747bd, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &7358508165028727499
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2962024014378314480}
+  - component: {fileID: 6547777333061645896}
+  m_Layer: 0
+  m_Name: Taro
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2962024014378314480
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7358508165028727499}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.22664618, z: -0, w: 0.97397715}
+  m_LocalPosition: {x: -0.651, y: 0.811, z: -0.209}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8363333444387365768}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 26.199, z: 0}
+--- !u!114 &6547777333061645896
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7358508165028727499}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d10ca50fed0e01545940d1c9268b8b7e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CardDraw
+  matPrefab:
+  - {fileID: 2100000, guid: 17f4d86fcac6081428ed8911d49ab786, type: 2}
+  - {fileID: 2100000, guid: 87eab4794b49503469385285811c0ff4, type: 2}
+  - {fileID: 2100000, guid: ccb74f246f700a64c9ae7e0a532d0622, type: 2}
+  - {fileID: 2100000, guid: 7e6df46d9adf6d0488468bf53bce1f4c, type: 2}
+  - {fileID: 2100000, guid: 77a36f46dbbc57443a67f79781f212fd, type: 2}
+  - {fileID: 2100000, guid: 57e35c13c6a927344bc4e4820af46548, type: 2}
+  - {fileID: 2100000, guid: 2eb11f569647f52478e7ec0025fc8338, type: 2}
+  - {fileID: 2100000, guid: 86b6b3a2f27776547978b2c9b9b4e308, type: 2}
+  - {fileID: 2100000, guid: 5b423cb40d5c9a94ca8723fe85e19431, type: 2}
+  - {fileID: 2100000, guid: 469ba86e6ef486e4d9dce032c89646d6, type: 2}
+  - {fileID: 2100000, guid: 22d324d65162b654ca3176ddc3e37a80, type: 2}
+  - {fileID: 2100000, guid: 98d37ad47c0133348b71bd290262065b, type: 2}
+  - {fileID: 2100000, guid: 4141cb89b8f003b4fa4dc06f8e9db084, type: 2}
+  - {fileID: 2100000, guid: 10f0fb17b58737747b57735f9cc5bec5, type: 2}
+  - {fileID: 2100000, guid: 904cb102c40fdb747b99013a28c54308, type: 2}
+  - {fileID: 2100000, guid: fd7202ca39104844fa99325f4ca00b30, type: 2}
+  - {fileID: 2100000, guid: 776e543b65057fd4691401ccc48b26eb, type: 2}
+  - {fileID: 2100000, guid: 42b1e0e68efbbf849974f7bb0ef32e14, type: 2}
+  - {fileID: 2100000, guid: 57c2ff2b6f7a61f4f862d7d6c463748c, type: 2}
+  - {fileID: 2100000, guid: 1f24df89c2c07fe45a85957a22b7f7f5, type: 2}
+  - {fileID: 2100000, guid: 575a993cce1cc4d478d468654bd02695, type: 2}
+  - {fileID: 2100000, guid: 1fa05e773e8ad334385e08f6655f5700, type: 2}
+  prefab: {fileID: 481120517747037138, guid: ef16ee8884c4a3949b845d371ba2f858, type: 3}
+  spawnLocation: {fileID: 2962024014378314480}
