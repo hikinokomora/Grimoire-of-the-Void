@@ -12,12 +12,9 @@ public class PhysicalRecipeBook : MonoBehaviour
     public GameObject pagePrefab;
     public float turnSpeed = 2f;
 
-    [Header("Data")]
+    [Header("Data (кэш, синхронизируется с OccultAspectRegistry)")]
     public List<OccultAspect> allAspects = new List<OccultAspect>();
     private List<OccultAspect> unlockedAspects = new List<OccultAspect>();
-    
-    [Header("Debug")]
-    public bool ignoreUnlockForDebug = true; // Покажет все рецепты для проверки
 
     private List<GameObject> spawnedPages = new List<GameObject>();
     private int currentPageIndex = 0; // 0 means page 0 is front. Page index increments by 1 per leaf.
@@ -25,7 +22,13 @@ public class PhysicalRecipeBook : MonoBehaviour
 
     private void Start()
     {
-        LoadAspectsFromResources();
+        OccultAspectRegistry.EnsureDefaultFromResources();
+        if (OccultAspectRegistry.Count == 0)
+        {
+            Debug.LogError("[PhysicalRecipeBook] Каталог аспектов пуст. Поместите OccultAspect в Resources/" + OccultAspectRegistry.ResourcesCatalogSubfolder + " и/или заполните каталог в AspectManager.");
+            return;
+        }
+        allAspects = OccultAspectRegistry.CloneOrderedList();
         UpdateUnlockedAspects();
         GeneratePages();
         CreateClickZones();
@@ -33,8 +36,8 @@ public class PhysicalRecipeBook : MonoBehaviour
 
     private void Update()
     {
-        // Поддержка перелистывания с клавиатуры (A / D или Стрелочки)
-        if (UnityEngine.InputSystem.Keyboard.current != null)
+        // Поддержка перелистывания с клавиатуры (A / D или Стрелочки) — только в режиме у стола
+        if (UnityEngine.InputSystem.Keyboard.current != null && CraftingViewController.IsInCraftingView)
         {
             if (UnityEngine.InputSystem.Keyboard.current.dKey.wasPressedThisFrame || 
                 UnityEngine.InputSystem.Keyboard.current.rightArrowKey.wasPressedThisFrame)
@@ -58,21 +61,53 @@ public class PhysicalRecipeBook : MonoBehaviour
         }
     }
 
-    private void LoadAspectsFromResources()
+    /// <summary>После крафта / ad-hoc добавления в реестр: перерисовка или полная пересборка стопки.</summary>
+    public void SyncFromRegistry(OccultAspect focus = null)
     {
-        // Мы теперь грузим ВСЕ OccultAspects со всего проекта! (потому что они могут быть разбросаны)
-        OccultAspect[] loadedAspects = Resources.LoadAll<OccultAspect>("");
-        if (loadedAspects.Length > 0)
+        if (!OccultAspectRegistry.IsInitialized) return;
+        int prev = allAspects != null ? allAspects.Count : 0;
+        allAspects = OccultAspectRegistry.CloneOrderedList();
+        UpdateUnlockedAspects();
+        if (allAspects.Count != prev || spawnedPages.Count < 2)
         {
-            allAspects = new List<OccultAspect>(loadedAspects);
-            
-            // ПРИ ЗАПУСКЕ ИГРЫ: сбрасываем состояние сессии на оригинальное базовое значение 
-            foreach (var a in allAspects)
+            GeneratePages();
+            CreateClickZones();
+        }
+        else
+        {
+            RebindPageContents();
+        }
+        if (focus != null) GoToPageForAspect(focus);
+    }
+
+    private void GoToPageForAspect(OccultAspect newAspect)
+    {
+        if (newAspect == null) return;
+        int aspectIndex = IndexOfAspectForNavigation(newAspect);
+        if (aspectIndex == -1) return;
+        int targetLeafIndex = aspectIndex / 2;
+        int targetPageIndex = targetLeafIndex + 1;
+        if (currentPageIndex != targetPageIndex) GoToPage(targetPageIndex);
+    }
+
+    private void RebindPageContents()
+    {
+        int totalLeaves = Mathf.CeilToInt((float)unlockedAspects.Count / 2f);
+        if (totalLeaves == 0) totalLeaves = 1;
+        for (int i = 0; i < totalLeaves; i++)
+        {
+            int pageObjIndex = i + 1;
+            if (pageObjIndex < spawnedPages.Count - 1)
             {
-                if (a != null) a.sessionUnlocked = a.isUnlocked;
+                PhysicalPage pp = spawnedPages[pageObjIndex].GetComponent<PhysicalPage>();
+                if (pp == null) continue;
+                int frontIndex = i * 2;
+                if (frontIndex < unlockedAspects.Count) pp.SetupFront(unlockedAspects[frontIndex]);
+                else pp.SetupFrontEmpty();
+                int backIndex = i * 2 + 1;
+                if (backIndex < unlockedAspects.Count) pp.SetupBack(unlockedAspects[backIndex]);
+                else pp.SetupBackEmpty();
             }
-            
-            Debug.Log($"[PhysicalRecipeBook] Погружено аспектов: {allAspects.Count}");
         }
     }
 
@@ -90,62 +125,22 @@ public class PhysicalRecipeBook : MonoBehaviour
         }
     }
 
-    public void RefreshBook(OccultAspect newAspect = null)
+    public void RefreshBook(OccultAspect newAspect = null) => SyncFromRegistry(newAspect);
+
+    private int IndexOfAspectForNavigation(OccultAspect a)
     {
-        UpdateUnlockedAspects();
-        
-        // Обновляем визуальное содержимое уже созданных страниц (без пересоздания)
-        // spawnedPages[0] - передняя обложка
-        // spawnedPages[1] до [N-1] - внутренние страницы
-        // spawnedPages[N] - задняя обложка
-        
-        int totalLeaves = Mathf.CeilToInt((float)unlockedAspects.Count / 2f);
-        if (totalLeaves == 0) totalLeaves = 1;
-
-        for (int i = 0; i < totalLeaves; i++)
+        if (a == null) return -1;
+        a = OccultAspectRegistry.GetCanonical(a) ?? a;
+        for (int k = 0; k < unlockedAspects.Count; k++)
         {
-            // spawnedPages[0] — это передняя обложка
-            int pageObjIndex = i + 1;
-            if (pageObjIndex < spawnedPages.Count - 1)
-            {
-                PhysicalPage pp = spawnedPages[pageObjIndex].GetComponent<PhysicalPage>();
-                if (pp != null)
-                {
-                    int frontIndex = i * 2;
-                    if (frontIndex < unlockedAspects.Count)
-                        pp.SetupFront(unlockedAspects[frontIndex]);
-                    else
-                        pp.SetupFrontEmpty();
-
-                    int backIndex = i * 2 + 1;
-                    if (backIndex < unlockedAspects.Count)
-                        pp.SetupBack(unlockedAspects[backIndex]);
-                    else
-                        pp.SetupBackEmpty();
-                }
-            }
+            if (unlockedAspects[k] == a) return k;
         }
-
-        // Плавный переход к странице с новым аспектом
-        if (newAspect != null)
+        if (string.IsNullOrEmpty(a.ID)) return -1;
+        for (int k = 0; k < unlockedAspects.Count; k++)
         {
-            int aspectIndex = unlockedAspects.IndexOf(newAspect);
-            if (aspectIndex != -1)
-            {
-                // Индекс листа (0 для рецептов 0 и 1, 1 для 2 и 3, и т.д.)
-                int targetLeafIndex = aspectIndex / 2;
-                
-                // +1 потому что currentPageIndex так же считает перелистывания?
-                // Смотрим: изначально currentPageIndex = 0 (показывается обложка).
-                // При NextPage currentPageIndex становится 1, и обложка переворачивается (показывая 0 и 1 рецепт).
-                int targetPageIndex = targetLeafIndex + 1;
-                
-                if (currentPageIndex != targetPageIndex)
-                {
-                    GoToPage(targetPageIndex);
-                }
-            }
+            if (unlockedAspects[k] != null && unlockedAspects[k].ID == a.ID) return k;
         }
+        return -1;
     }
 
     public void GoToPage(int targetIndex)

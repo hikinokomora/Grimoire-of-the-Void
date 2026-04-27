@@ -12,7 +12,7 @@ namespace GrimoireOfTheVoid.Crafting
         [Tooltip("Ссылка на контроллер котла на сцене")]
         [SerializeField] private CauldronController cauldron;
 
-        [Tooltip("Дистанция от камеры до плоскости, по которой перемещается объект")]
+        [Tooltip("Резерв: пересечение с плоскостью на этом расстоянии вдоль взгляда, если луч не попал в горизонтальную плоскость (X-Z)")]
         [SerializeField] private float dragDistance = 3f;
 
         private Camera mainCamera;
@@ -21,44 +21,71 @@ namespace GrimoireOfTheVoid.Crafting
         private Vector3 originalPosition;
         private bool wasCloned;
         private Plane dragPlane; // Горизонтальная плоскость для перетаскивания
+        private bool suppressThisUpdate;
 
         private void Awake()
         {
-            mainCamera = Camera.main;
+            TryRefreshMainCamera();
+        }
+
+        private void TryRefreshMainCamera()
+        {
+            if (mainCamera == null)
+            {
+                mainCamera = Camera.main;
+            }
+        }
+
+        /// <summary>Игнорирует один кадр ввода после активации (тот же клик, что открыл режим стола).</summary>
+        public void RequestSuppressNextInput()
+        {
+            suppressThisUpdate = true;
         }
 
         private void Update()
         {
-            if (Mouse.current == null) return;
+            if (suppressThisUpdate)
+            {
+                suppressThisUpdate = false;
+                return;
+            }
+            if (Mouse.current == null)
+            {
+                return;
+            }
 
+            TryRefreshMainCamera();
             Vector2 mousePos = Mouse.current.position.ReadValue();
+            var left = Mouse.current.leftButton;
 
-            // ЛКМ Нажата - пытаемся взять объект
-            if (Mouse.current.leftButton.wasPressedThisFrame)
+            // wasPressed / isPressed / wasReleased в одной цепи if-else: после suppress удержанная ЛКМ
+            // не даёт wasPressed, и взятие с первого кадра не срабатывало.
+            if (left.wasPressedThisFrame)
             {
                 TryPickUp(mousePos);
             }
-            // ЛКМ Удерживается - тащим объект
-            else if (Mouse.current.leftButton.isPressed && draggedObject != null)
+
+            if (draggedObject != null)
             {
-                Drag(mousePos);
-            }
-            // ЛКМ Отпущена - бросаем объект
-            else if (Mouse.current.leftButton.wasReleasedThisFrame && draggedObject != null)
-            {
-                TryDrop(mousePos);
+                if (left.isPressed)
+                {
+                    Drag(mousePos);
+                }
+                if (left.wasReleasedThisFrame)
+                {
+                    TryDrop(mousePos);
+                }
             }
 
-            // ПКМ (Правая кнопка) - командуем котлу варить
             if (Mouse.current.rightButton.wasPressedThisFrame)
             {
-                Debug.Log($"[DragAndDrop] Клик ПКМ по координатам экрана: {mousePos}");
                 TryClickCauldronForCrafting(mousePos);
             }
         }
 
         private void TryPickUp(Vector2 screenPosition)
         {
+            TryRefreshMainCamera();
             if (mainCamera == null)
             {
                 Debug.LogError("[DragAndDrop] ОШИБКА: Не найдена MainCamera! Убедитесь, что на вашей камере стоит тег 'MainCamera'.");
@@ -66,34 +93,37 @@ namespace GrimoireOfTheVoid.Crafting
             }
 
             Ray ray = mainCamera.ScreenPointToRay(screenPosition);
-            // Увеличиваем дистанцию луча с 20f до 1000f на случай, если камера далеко
-            if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
+            TryProcessPickRay(ray);
+        }
+
+        private void TryProcessPickRay(Ray ray)
+        {
+            int layerMask = Physics.DefaultRaycastLayers;
+            int count = Physics.RaycastNonAlloc(ray, RaycastBuffer, 1000f, layerMask, QueryTriggerInteraction.Collide);
+            if (count == 0) return;
+
+            SortRaycastBufferByDistance(count);
+            for (int i = 0; i < count; i++)
             {
-                // 1. Проверяем, не кликнули ли мы по рычагу
-                if (hit.collider.TryGetComponent<CauldronLever>(out CauldronLever lever))
+                RaycastHit h = RaycastBuffer[i];
+                if (ShouldSkipForCraftingDrag(h)) continue;
+
+                if (h.collider.TryGetComponent<CauldronLever>(out CauldronLever lever))
                 {
                     lever.Pull();
-                    return; // Прерываем логику перетаскивания
+                    return;
                 }
-
-                // 3. НОВОЕ: Проверяем, не кликнули ли мы по кнопке книги
-                if (hit.collider.TryGetComponent<PhysicalBookButton>(out PhysicalBookButton bookButton))
+                if (h.collider.TryGetComponent<PhysicalBookButton>(out PhysicalBookButton bookButton))
                 {
-                    Debug.Log($"[DragAndDrop] Найден клик по книге через CraftingInteractor: {(bookButton.isNextPage ? "Вперед" : "Назад")}");
                     bookButton.ForceClick();
                     return;
                 }
-
-                // 2. Иначе проверяем, можно ли взять этот объект
-                if (hit.collider.TryGetComponent<AspectObject>(out AspectObject aspect))
+                if (h.collider.TryGetComponent<AspectObject>(out AspectObject aspect))
                 {
-                    Debug.Log($"[DragAndDrop] Взят объект: {(aspect.aspectData != null ? aspect.aspectData.DisplayName : "Без данных")}");
-                    
                     if (aspect.isInfiniteSource)
                     {
-                        // Создаем временную копию для перетаскивания
                         draggedObject = Instantiate(aspect, aspect.transform.position, aspect.transform.rotation);
-                        draggedObject.isInfiniteSource = false; // копия смертна
+                        draggedObject.isInfiniteSource = false;
                         wasCloned = true;
                     }
                     else
@@ -102,28 +132,64 @@ namespace GrimoireOfTheVoid.Crafting
                         originalPosition = aspect.transform.position;
                         wasCloned = false;
                     }
-
-                    // Отключаем коллайдер, чтобы он не перекрывалRaycast при поиске котла при дропе
                     if (draggedObject.TryGetComponent<Collider>(out Collider col))
                     {
                         col.enabled = false;
                     }
-                    
-                    // Создаем горизонтальную плоскость на высоте взятого объекта
                     dragPlane = new Plane(Vector3.up, draggedObject.transform.position);
+                    return;
                 }
             }
         }
+
+        private static void SortRaycastBufferByDistance(int count)
+        {
+            for (int a = 0; a < count - 1; a++)
+            {
+                for (int b = a + 1; b < count; b++)
+                {
+                    if (RaycastBuffer[b].distance < RaycastBuffer[a].distance)
+                    {
+                        (RaycastBuffer[a], RaycastBuffer[b]) = (RaycastBuffer[b], RaycastBuffer[a]);
+                    }
+                }
+            }
+        }
+
+        private static bool ShouldSkipForCraftingDrag(RaycastHit h)
+        {
+            Collider c = h.collider;
+            if (c == null) return true;
+            if (c.GetComponent<CraftingTableEntryObstacle>() != null)
+            {
+                return true;
+            }
+            // Тот же GameObject, что и CraftingTableStation — зона клика «сесть к столу», а не лут
+            if (c.GetComponent<CraftingTableStation>() != null)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private static readonly RaycastHit[] RaycastBuffer = new RaycastHit[32];
 
         private void Drag(Vector2 screenPosition)
         {
             if (draggedObject == null || mainCamera == null) return;
 
             Ray ray = mainCamera.ScreenPointToRay(screenPosition);
-            // Пересекаем луч из камеры с математической горизонтальной плоскостью (X-Z)
             if (dragPlane.Raycast(ray, out float distance))
             {
                 draggedObject.transform.position = ray.GetPoint(distance);
+                return;
+            }
+
+            Vector3 planePoint = mainCamera.transform.position + mainCamera.transform.forward * dragDistance;
+            var depthPlane = new Plane(-mainCamera.transform.forward, planePoint);
+            if (depthPlane.Raycast(ray, out float d2))
+            {
+                draggedObject.transform.position = ray.GetPoint(d2);
             }
         }
 
@@ -142,7 +208,7 @@ namespace GrimoireOfTheVoid.Crafting
             // Пускаем луч по вертикальной оси ВНИЗ от позиции объекта
             // Начинаем луч немного выше объекта (например, на 5 юнитов), чтобы гарантированно задеть коллайдер котла
             Ray dropRay = new Ray(draggedObject.transform.position + Vector3.up * 5f, Vector3.down);
-            RaycastHit[] hits = Physics.RaycastAll(dropRay, 20f);
+            RaycastHit[] hits = Physics.RaycastAll(dropRay, 20f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
 
             foreach (var hit in hits)
             {
@@ -176,16 +242,21 @@ namespace GrimoireOfTheVoid.Crafting
 
         private void TryClickCauldronForCrafting(Vector2 screenPosition)
         {
+            TryRefreshMainCamera();
             if (mainCamera == null) return;
-
             Ray ray = mainCamera.ScreenPointToRay(screenPosition);
-            if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
+            int count = Physics.RaycastNonAlloc(ray, RaycastBuffer, 1000f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
+            if (count == 0) return;
+            SortRaycastBufferByDistance(count);
+            for (int i = 0; i < count; i++)
             {
-                CauldronController hitCauldron = hit.collider.GetComponentInParent<CauldronController>();
+                RaycastHit h = RaycastBuffer[i];
+                if (ShouldSkipForCraftingDrag(h)) continue;
+                CauldronController hitCauldron = h.collider.GetComponentInParent<CauldronController>();
                 if (hitCauldron != null)
                 {
-                    Debug.Log("[DragAndDrop] Клик по котлу (попытка крафта)!");
                     hitCauldron.TryCraft();
+                    return;
                 }
             }
         }

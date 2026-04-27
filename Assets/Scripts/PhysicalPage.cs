@@ -72,7 +72,7 @@ public class PhysicalPage : MonoBehaviour
         
         // Автоматически открываем базовые элементы (у которых нет состава) или те, где стоит галочка isUnlocked
         bool isBaseAspect = string.IsNullOrWhiteSpace(data.ingredientsText) || data.ingredientsText.Trim() == "Нет данных";
-        bool isRevealed = data.sessionUnlocked || data.isUnlocked || isBaseAspect;
+        bool isRevealed = OccultAspectRegistry.IsRevealedForPage(data);
 
         string ingredients = isRevealed 
             ? (isBaseAspect ? "\n\n<b>Состав:</b>\n<color=#a2a2a2>Базовый элемент</color>" : $"\n\n<b>Состав:</b>\n{data.ingredientsText}") 
@@ -82,18 +82,20 @@ public class PhysicalPage : MonoBehaviour
         
         if (frontAspectImage != null)
         {
-            if (data.aspectIcon != null)
+            bool showImage = OccultAspectRegistry.IsImageRevealedForPage(data) && data.aspectIcon != null;
+            if (showImage)
             {
                 frontAspectImage.gameObject.SetActive(true);
                 frontAspectImage.sprite = data.aspectIcon;
+                frontAspectImage.color = Color.white;
             }
             else
             {
-                // Если у аспекта забыли установить картинку, не прячем, а показываем белый квадрат с сообщением
-                frontAspectImage.gameObject.SetActive(true);
-                frontAspectImage.sprite = null;
-                frontAspectImage.color = new Color(1, 1, 1, 0.2f);
-                Debug.LogWarning($"[PhysicalPage] У аспекта '{data.DisplayName}' нет картинки (Aspect Icon)!");
+                frontAspectImage.gameObject.SetActive(false);
+                if (OccultAspectRegistry.IsImageRevealedForPage(data) && data.aspectIcon == null)
+                {
+                    Debug.LogWarning($"[PhysicalPage] У аспекта '{data.DisplayName}' раскрыта картинка, но нет спрайта (Aspect Icon).");
+                }
             }
         }
     }
@@ -118,7 +120,7 @@ public class PhysicalPage : MonoBehaviour
         
         // Автоматически открываем базовые элементы (у которых нет состава) или те, где стоит галочка isUnlocked
         bool isBaseAspect = string.IsNullOrWhiteSpace(data.ingredientsText) || data.ingredientsText.Trim() == "Нет данных";
-        bool isRevealed = data.sessionUnlocked || data.isUnlocked || isBaseAspect;
+        bool isRevealed = OccultAspectRegistry.IsRevealedForPage(data);
 
         string ingredients = isRevealed 
             ? (isBaseAspect ? "\n\n<b>Состав:</b>\n<color=#a2a2a2>Базовый элемент</color>" : $"\n\n<b>Состав:</b>\n{data.ingredientsText}") 
@@ -128,16 +130,16 @@ public class PhysicalPage : MonoBehaviour
         
         if (backAspectImage != null)
         {
-            if (data.aspectIcon != null)
+            bool showImage = OccultAspectRegistry.IsImageRevealedForPage(data) && data.aspectIcon != null;
+            if (showImage)
             {
                 backAspectImage.gameObject.SetActive(true);
                 backAspectImage.sprite = data.aspectIcon;
+                backAspectImage.color = Color.white;
             }
             else
             {
-                backAspectImage.gameObject.SetActive(true);
-                backAspectImage.sprite = null;
-                backAspectImage.color = new Color(1, 1, 1, 0.2f);
+                backAspectImage.gameObject.SetActive(false);
             }
         }
     }
