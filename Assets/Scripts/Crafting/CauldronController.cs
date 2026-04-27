@@ -24,6 +24,9 @@ namespace GrimoireOfTheVoid.Crafting
         [Tooltip("Эффект дыма (Particle System), который сработает при сбросе котла или неудачном крафте.")]
         [SerializeField] private ParticleSystem resetSmokeEffect;
 
+        [Tooltip("Доп. партиклы «вылет из котла» при дёргании рычага (сброс); проигрываются вместе с дымом, даже если котёл пуст.")]
+        [SerializeField] private ParticleSystem[] clearBurstEffects;
+
         // TODO: Переменные для расширения под таймер
         // [SerializeField] private float defaultCraftTime = 2f;
         // private float currentCraftTimer = 0f;
@@ -107,11 +110,8 @@ namespace GrimoireOfTheVoid.Crafting
                     Debug.Log($"[Cauldron] ✓ УСПЕХ! Найден рецепт. Крафтим: {recipe.output.DisplayName}!");
                     SpawnResult(recipe.output);
                     
-                    // РАЗБЛОКИРУЕМ АСПЕКТ В КНИГЕ
-                    if (AspectManager.Instance != null)
-                    {
-                        AspectManager.Instance.UnlockAspect(recipe.output);
-                    }
+                    // Разблокировка в реестре и обновление книг (без обязательного AspectManager)
+                    OccultAspectRegistry.UnlockAndNotifyUI(recipe.output);
                     
                     // После успешного крафта очищаем котел
                     ClearIngredients();
@@ -165,11 +165,7 @@ namespace GrimoireOfTheVoid.Crafting
                 Debug.Log($"[Cauldron] Крафт успешен! Получен результат: {resultData.DisplayName}");
                 SpawnResult(resultData);
                 
-                // РАЗБЛОКИРУЕМ АСПЕКТ В КНИГЕ
-                if (AspectManager.Instance != null)
-                {
-                    AspectManager.Instance.UnlockAspect(resultData);
-                }
+                OccultAspectRegistry.UnlockAndNotifyUI(resultData);
             }
             else
             {
@@ -214,12 +210,25 @@ namespace GrimoireOfTheVoid.Crafting
                 ClearIngredients();
             }
 
+            PlayResetVisualEffects();
+
+            Debug.Log("[Cauldron] Котел принудительно сброшен. Пуфф!");
+        }
+
+        private void PlayResetVisualEffects()
+        {
             if (resetSmokeEffect != null)
             {
                 resetSmokeEffect.Play();
             }
-            
-            Debug.Log("[Cauldron] Котел принудительно сброшен. Пуфф!");
+            if (clearBurstEffects == null) return;
+            for (int i = 0; i < clearBurstEffects.Length; i++)
+            {
+                if (clearBurstEffects[i] != null)
+                {
+                    clearBurstEffects[i].Play();
+                }
+            }
         }
 
         /// <summary>
