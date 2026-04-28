@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.OccultAspect
   ID: fire
   DisplayName: "\u041E\u0433\u043E\u043D\u044C"
-  prefab: {fileID: 3266438862739833938, guid: f45f3a65ef9b50f47bce5b23edc07efc, type: 3}
+  prefab: {fileID: 3209600278417958537, guid: f45f3a65ef9b50f47bce5b23edc07efc, type: 3}
   description: "\u041E\u0447\u0438\u0449\u0430\u044E\u0449\u0435\u0435 \u043F\u043B\u0430\u043C\u044F."
   aspectIcon: {fileID: 21300000, guid: f354c6816c8fa6c4aa147c46c1c5aca2, type: 3}
   ingredientsText: 
