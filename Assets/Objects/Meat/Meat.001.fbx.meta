@@ -1,19 +1,9 @@
 fileFormatVersion: 2
-guid: 8ce3a94f8a7a5674e87db73b8dcb554a
+guid: 970e66b2a097e5b47bf00fdaf4f7b738
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Bone
-    second: {fileID: 2100000, guid: fd4df1a52fc40354cbfcf6648a5e1318, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: meat
-    second: {fileID: 2100000, guid: cfce7d758a28f1c4ba4a93e53a0552af, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0
