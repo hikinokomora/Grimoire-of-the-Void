@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.OccultAspect
   ID: blood
   DisplayName: "\u041A\u0440\u043E\u0432\u044C"
-  prefab: {fileID: 1992919520333158202, guid: d5c4b5fa6c12f194693a7289ab411086, type: 3}
+  prefab: {fileID: -8616000943775014853, guid: e84845f44f6a24d47b2a6e71aa1446dc, type: 3}
   description: "\u0422\u043E\u043A \u0436\u0438\u0437\u043D\u0438."
   aspectIcon: {fileID: 21300000, guid: 7065910333d13dd4f90454a107728fe4, type: 3}
   ingredientsText: 
