@@ -199,6 +199,16 @@ namespace GrimoireOfTheVoid.Crafting
 
         private IEnumerator ExitCameraTransition(Transform cameraPivot)
         {
+            if (cameraPivot == null)
+            {
+                _active = false;
+                IsInCraftingView = false;
+                _currentViewAnchor = null;
+                _isExiting = false;
+                _transitionRoutine = null;
+                yield break;
+            }
+
             var parent = _savedCameraParent != null ? _savedCameraParent : movement.transform;
             Vector3 targetWorldPos = parent.TransformPoint(_savedCameraLocalPosition);
             Quaternion targetWorldRot = parent.rotation * _savedCameraLocalRotation;
@@ -214,6 +224,10 @@ namespace GrimoireOfTheVoid.Crafting
             float t = 0f;
             while (t < 1f)
             {
+                if (cameraPivot == null)
+                {
+                    yield break;
+                }
                 t += Time.deltaTime / d;
                 float s = Mathf.SmoothStep(0f, 1f, t);
                 cameraPivot.SetPositionAndRotation(

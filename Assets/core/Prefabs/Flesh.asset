@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Flesh
   m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.OccultAspect
   ID: flesh
-  DisplayName: flesh
+  DisplayName: "\u041F\u043B\u043E\u0442\u044C"
   prefab: {fileID: -1434441539027678862, guid: 7c5f608b7b7e6484ab3856aa75874189, type: 3}
   description: "\u041F\u0438\u0441\u044C\u043A\u0430"
   aspectIcon: {fileID: 21300000, guid: 74cef9908fa462f499e0fbd975e79da0, type: 3}

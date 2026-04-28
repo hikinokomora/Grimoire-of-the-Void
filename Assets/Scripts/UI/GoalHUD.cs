@@ -5,6 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using GrimoireOfTheVoid.Crafting;
 
 namespace GrimoireOfTheVoid.UI
 {
@@ -25,6 +26,15 @@ namespace GrimoireOfTheVoid.UI
         [SerializeField] [Min(0f)] private float criticalSeconds = 10f;
         [SerializeField] private Color normalTimerColor = Color.white;
         [SerializeField] private Color criticalTimerColor = new Color(1f, 0.35f, 0.35f);
+        [SerializeField] private bool forceTimerFillImageToFilled = true;
+        [Tooltip("Если true — полоска уменьшается через RectTransform (anchorMax.x). Работает всегда, даже если fillAmount не влияет (Image Type = Simple и т.п.).")]
+        [SerializeField] private bool driveTimerBarByRectTransform = true;
+
+        [Header("Timer bar colors")]
+        [SerializeField] private bool tintTimerBarByRemaining = true;
+        [SerializeField] private Color barFullColor = new Color(0.25f, 0.95f, 0.45f, 0.85f);
+        [SerializeField] private Color barMidColor = new Color(0.98f, 0.85f, 0.25f, 0.85f);
+        [SerializeField] private Color barLowColor = new Color(1f, 0.28f, 0.28f, 0.85f);
 
         [Header("End screens")]
         [SerializeField] private GameObject gameOverPanel;
@@ -37,10 +47,24 @@ namespace GrimoireOfTheVoid.UI
         [SerializeField] private Button quitButton;
 
         private GameDirector _subscribedDirector;
+        private Vector2 _timerFillAnchorMin;
+        private Vector2 _timerFillAnchorMax;
+        private Vector2 _timerFillOffsetMin;
+        private Vector2 _timerFillOffsetMax;
+        private BasicMovement[] _cachedMovements;
 
         private void OnEnable()
         {
             SubscribeDirectorEvents();
+
+            if (timerFill != null && forceTimerFillImageToFilled)
+            {
+                // If Image type is Simple, fillAmount won't visually change.
+                timerFill.type = Image.Type.Filled;
+                timerFill.fillMethod = Image.FillMethod.Horizontal;
+                timerFill.fillOrigin = (int)Image.OriginHorizontal.Left;
+            }
+            CacheTimerFillRectDefaults();
 
             if (restartButton != null)
             {
@@ -64,6 +88,8 @@ namespace GrimoireOfTheVoid.UI
                 ApplyGoal(GameDirector.Instance.CurrentTarget);
                 OnDirectorTimerChanged(GameDirector.Instance.TimeRemaining, GameDirector.Instance.MaxTime);
             }
+
+            CacheMovementIfNeeded();
         }
 
         private void OnDisable()
@@ -154,8 +180,62 @@ namespace GrimoireOfTheVoid.UI
 
             if (timerFill != null && max > 0f)
             {
-                timerFill.fillAmount = Mathf.Clamp01(remaining / max);
+                float t = Mathf.Clamp01(remaining / max);
+                timerFill.fillAmount = t;
+
+                if (driveTimerBarByRectTransform)
+                {
+                    ApplyTimerFillByRect(t);
+                }
+
+                if (tintTimerBarByRemaining)
+                {
+                    // 1..0 => green -> yellow -> red
+                    if (t >= 0.5f)
+                    {
+                        float u = Mathf.InverseLerp(0.5f, 1f, t);
+                        timerFill.color = Color.Lerp(barMidColor, barFullColor, u);
+                    }
+                    else
+                    {
+                        float u = Mathf.InverseLerp(0f, 0.5f, t);
+                        timerFill.color = Color.Lerp(barLowColor, barMidColor, u);
+                    }
+                }
             }
+        }
+
+        private void CacheTimerFillRectDefaults()
+        {
+            if (timerFill == null) return;
+            RectTransform rt = timerFill.rectTransform;
+            _timerFillAnchorMin = rt.anchorMin;
+            _timerFillAnchorMax = rt.anchorMax;
+            _timerFillOffsetMin = rt.offsetMin;
+            _timerFillOffsetMax = rt.offsetMax;
+        }
+
+        private void ApplyTimerFillByRect(float t)
+        {
+            if (timerFill == null) return;
+            RectTransform rt = timerFill.rectTransform;
+
+            // Assume the bar is laid out as a stretched rect inside a container (common for BG/Fill).
+            // We shrink it by moving anchorMax.x towards anchorMin.x.
+            Vector2 aMin = _timerFillAnchorMin;
+            Vector2 aMax = _timerFillAnchorMax;
+            float startX = aMin.x;
+            float endX = aMax.x;
+            if (endX < startX)
+            {
+                (startX, endX) = (endX, startX);
+            }
+
+            float x = Mathf.Lerp(startX, endX, t);
+            rt.anchorMin = new Vector2(aMin.x, aMin.y);
+            rt.anchorMax = new Vector2(x, aMax.y);
+            rt.offsetMin = _timerFillOffsetMin;
+            rt.offsetMax = _timerFillOffsetMax;
         }
 
         private static string FormatTime(float seconds)
@@ -178,6 +258,8 @@ namespace GrimoireOfTheVoid.UI
                 gameOverPanel.SetActive(true);
             }
 
+            ApplyEndState();
+
             if (pauseTimeOnGameOver)
             {
                 Time.timeScale = 0f;
@@ -190,6 +272,8 @@ namespace GrimoireOfTheVoid.UI
             {
                 victoryPanel.SetActive(true);
             }
+
+            ApplyEndState();
 
             if (pauseTimeOnGameOver)
             {
@@ -223,6 +307,43 @@ namespace GrimoireOfTheVoid.UI
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #endif
+        }
+
+        private void CacheMovementIfNeeded()
+        {
+            if (_cachedMovements != null && _cachedMovements.Length > 0) return;
+            _cachedMovements = UnityEngine.Object.FindObjectsByType<BasicMovement>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        }
+
+        private void ApplyEndState()
+        {
+            // Unlock mouse for UI interaction.
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+
+            // Stop camera rotation / movement.
+            CacheMovementIfNeeded();
+            if (_cachedMovements != null)
+            {
+                for (int i = 0; i < _cachedMovements.Length; i++)
+                {
+                    BasicMovement m = _cachedMovements[i];
+                    if (m == null) continue;
+                    m.ForceDropHeld();
+                    m.EnterStationView(); // RotateCamera() early-outs when InStationView == true
+                    m.canMove = false;
+                    m.enabled = false; // stops Update() entirely (mouse look still runs at timescale=0 otherwise)
+                }
+            }
+
+            // If we are in crafting view, its transition coroutine can keep moving the camera pivot.
+            // Disable it to prevent further camera motion during end screens.
+            CraftingViewController cvc = CraftingViewController.Instance;
+            if (cvc != null)
+            {
+                cvc.StopAllCoroutines();
+                cvc.enabled = false;
+            }
         }
     }
 }
