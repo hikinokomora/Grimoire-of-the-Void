@@ -59,6 +59,13 @@ namespace GrimoireOfTheVoid.Game
         public event Action OnGameOver;
         public event Action OnVictory;
         private bool _victoryTriggered;
+        private int _forceNextGoalTier = -1;
+
+        public void ForceNextGoalTierBumpOnce()
+        {
+            int cur = CurrentTier > 0 ? CurrentTier : 1;
+            _forceNextGoalTier = Mathf.Min(cur + 1, maxTier);
+        }
 
         private void Awake()
         {
@@ -290,6 +297,13 @@ namespace GrimoireOfTheVoid.Game
             _phaseTier = nextTier;
 
             int t = _phaseTier;
+            if (_forceNextGoalTier >= 1)
+            {
+                int desired = Mathf.Clamp(_forceNextGoalTier, 1, maxTier);
+                _forceNextGoalTier = -1;
+                if (HasAny(desired)) t = desired;
+                else if (desired > 1 && HasAny(desired - 1)) t = desired - 1;
+            }
             if (UnityEngine.Random.value < promoteChance && t < maxTier && HasAny(t + 1))
             {
                 t++;
