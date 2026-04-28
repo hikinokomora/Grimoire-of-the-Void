@@ -32,7 +32,7 @@ public class CardDraw : MonoBehaviour, IInteractable
         if (isOnCooldown) return;
         isOnCooldown = true;
 
-        index = Random.Range(0, 21);
+        index = UnityEngine.Random.Range(0, 21);
         if (isFart && index is 3 or 6 or 11 or 12 or 13 or 15 or 16 or 18 or 19) { index = 0; }
         GameObject card = Instantiate(prefab, gameObject.transform.position, gameObject.transform.rotation);
         card.transform.SetParent(transform);
@@ -69,17 +69,17 @@ public class CardDraw : MonoBehaviour, IInteractable
                     var a = list[i];
                     if (a == null || a.aspectIcon == null || OccultAspectRegistry.IsImageRevealedForPage(a)) list.RemoveAt(i);
                 }
-                if (list.Count > 0) OccultAspectRegistry.RevealImageAndNotifyUI(list[Random.Range(0, list.Count)], false);
+                if (list.Count > 0) OccultAspectRegistry.RevealImageAndNotifyUI(list[UnityEngine.Random.Range(0, list.Count)], false);
                 text = "II Аркан: Папесса"; break;
             case 3:
                 title = "Императрица";
                 desc = "Один из эмбрионов начинает говорить";
-                babe[Random.Range(0,babe.Length-1)].GetComponent<PlayAudio>().enabled = true;
+                babe[UnityEngine.Random.Range(0,babe.Length-1)].GetComponent<PlayAudio>().enabled = true;
                 text = "III Аркан: Императрица"; break;
             case 4:
                 title = "Император";
                 desc = "Один из эмбрионов умирает";
-                babe[Random.Range(0, babe.Length - 1)].GetComponent<AudioSource>().mute = true;
+                babe[UnityEngine.Random.Range(0, babe.Length - 1)].GetComponent<AudioSource>().mute = true;
                 text = "IV Аркан: Император"; break;
             case 5: 
                 title = "Иерофант";
