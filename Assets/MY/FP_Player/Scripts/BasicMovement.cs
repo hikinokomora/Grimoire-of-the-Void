@@ -10,9 +10,6 @@ public class BasicMovement : MonoBehaviour
 
     [Header("Movement")]
     [SerializeField] public float walkSpeed = 4f;
-    [SerializeField] private float sprintSpeed = 7f;
-    [SerializeField] private float crouchSpeed = 2.5f;
-    [SerializeField] private float blockSpeed = 1.5f;
     [SerializeField] private float acceleration = 12f;
     [SerializeField] private float gravity = -25f;
 
@@ -21,12 +18,6 @@ public class BasicMovement : MonoBehaviour
     [SerializeField] private float gamepadSensitivity = 130f;
     [SerializeField] private float minPitch = -80f;
     [SerializeField] private float maxPitch = 80f;
-
-    [Header("Crouch")]
-    [SerializeField] private float standingHeight = 1.8f;
-    [SerializeField] private float crouchingHeight = 1.1f;
-    [SerializeField] private float crouchLerpSpeed = 12f;
-    [SerializeField] private float crouchCameraDrop = 0.35f;
 
     [Header("Take / Gravity Gun")]
     [SerializeField] private float interactionDistance = 4.5f;
@@ -39,29 +30,18 @@ public class BasicMovement : MonoBehaviour
     [Header("Interaction")]
     [SerializeField] private LayerMask interactMask = ~0;
 
-    [Header("Combat")]
-    [SerializeField] private float maxHealth = 100f;
-
-    public bool IsCrouching { get; private set; }
-    public bool IsBlocking { get; private set; }
-    public bool IsDead { get; private set; }
-    public float CurrentHealth { get; private set; }
-    public float MaxHealth => maxHealth;
     public Vector2 MoveInput => moveInput;
-    public bool IsSprinting => sprintHeld && !IsCrouching && !IsBlocking && moveInput.y > 0.1f;
     public Transform CameraPivot => cameraRoot;
     public bool InStationView { get; private set; }
 
     private CharacterController controller;
     private Vector2 moveInput;
     private Vector2 lookInput;
-    private bool sprintHeld;
     private float verticalVelocity;
     private float currentHorizontalSpeed;
     private float pitch;
     private BasicInput input;
     private bool lastInputWasGamepad;
-    private bool hitRequested;
     private Vector3 cameraInitialLocalPosition;
     private Rigidbody heldBody;
     private bool heldBodyInitialUseGravity;
@@ -82,11 +62,6 @@ public class BasicMovement : MonoBehaviour
         {
             cameraInitialLocalPosition = cameraRoot.localPosition;
         }
-
-        controller.height = standingHeight;
-        controller.center = new Vector3(0f, standingHeight * 0.5f, 0f);
-
-        CurrentHealth = maxHealth;
 
         input = new BasicInput();
         RegisterInputCallbacks();
@@ -115,19 +90,12 @@ public class BasicMovement : MonoBehaviour
 
     private void Update()
     {
-        if (IsDead)
-        {
-            return;
-        }
         if (InStationView)
         {
             return;
         }
         RotateCamera();
         if (canMove) { HandleMovement(); }
-        
-        HandleCrouchHeight();
-        HandleCrouchCamera();
     }
 
     private void FixedUpdate()
@@ -144,8 +112,6 @@ public class BasicMovement : MonoBehaviour
         InStationView = true;
         moveInput = Vector2.zero;
         lookInput = Vector2.zero;
-        sprintHeld = false;
-        IsBlocking = false;
     }
 
     public void ExitStationView()
@@ -166,14 +132,6 @@ public class BasicMovement : MonoBehaviour
         input.Player.Look.performed += OnLookPerformed;
         input.Player.Look.canceled += OnLookCanceled;
 
-        input.Player.Sprint.performed += OnSprintPerformed;
-        input.Player.Sprint.canceled += OnSprintCanceled;
-
-        input.Player.Crouch.performed += OnCrouchPerformed;
-        input.Player.Crouch.canceled += OnCrouchCanceled;
-
-        input.Player.Block.performed += OnBlockPerformed;
-        input.Player.Block.canceled += OnBlockCanceled;
 
         input.Player.Interact.performed += OnInteractPerformed;
         input.Player.Take.performed += OnTakePerformed;
@@ -192,15 +150,6 @@ public class BasicMovement : MonoBehaviour
         input.Player.Look.performed -= OnLookPerformed;
         input.Player.Look.canceled -= OnLookCanceled;
 
-        input.Player.Sprint.performed -= OnSprintPerformed;
-        input.Player.Sprint.canceled -= OnSprintCanceled;
-
-        input.Player.Crouch.performed -= OnCrouchPerformed;
-        input.Player.Crouch.canceled -= OnCrouchCanceled;
-
-        input.Player.Block.performed -= OnBlockPerformed;
-        input.Player.Block.canceled -= OnBlockCanceled;
-
         input.Player.Interact.performed -= OnInteractPerformed;
         input.Player.Take.performed -= OnTakePerformed;
     }
@@ -218,28 +167,7 @@ public class BasicMovement : MonoBehaviour
         lastInputWasGamepad = ctx.control.device is Gamepad;
     }
     private void OnLookCanceled(InputAction.CallbackContext ctx) => lookInput = Vector2.zero;
-    private void OnSprintPerformed(InputAction.CallbackContext ctx)
-    {
-        if (InStationView) { return; }
-        sprintHeld = true;
-    }
-    private void OnSprintCanceled(InputAction.CallbackContext ctx) => sprintHeld = false;
-    private void OnCrouchPerformed(InputAction.CallbackContext ctx)
-    {
-        if (InStationView) { return; }
-        TryCrouch();
-    }
-    private void OnCrouchCanceled(InputAction.CallbackContext ctx) { }
-    private void OnBlockPerformed(InputAction.CallbackContext ctx)
-    {
-        if (InStationView) { return; }
-        IsBlocking = true;
-    }
-    private void OnBlockCanceled(InputAction.CallbackContext ctx)
-    {
-        if (InStationView) { return; }
-        IsBlocking = false;
-    }
+
     private void OnInteractPerformed(InputAction.CallbackContext ctx)
     {
         if (InStationView) { return; }
@@ -249,43 +177,6 @@ public class BasicMovement : MonoBehaviour
     {
         if (InStationView) { return; }
         Take();
-    }
-
-
-    public void TakeDamage(float amount, Vector3 attackerWorldPosition)
-    {
-        if (IsDead || amount <= 0f)
-        {
-            return;
-        }
-
-        CurrentHealth = Mathf.Max(0f, CurrentHealth - amount);
-
-        if (CurrentHealth <= 0f)
-        {
-            Die();
-        }
-    }
-
-    public void Heal(float amount)
-    {
-        if (IsDead || amount <= 0f)
-        {
-            return;
-        }
-
-        CurrentHealth = Mathf.Min(maxHealth, CurrentHealth + amount);
-    }
-
-    private void Die()
-    {
-        IsDead = true;
-        moveInput = Vector2.zero;
-        lookInput = Vector2.zero;
-        sprintHeld = false;
-        IsBlocking = false;
-        ReleaseHeldObject();
-        input.Player.Disable();
     }
 
     private void RotateCamera()
@@ -318,22 +209,10 @@ public class BasicMovement : MonoBehaviour
 
         verticalVelocity += gravity * Time.deltaTime;
 
-        float targetSpeed = walkSpeed;
-        if (IsBlocking)
-        {
-            targetSpeed = blockSpeed;
-        }
-        else if (IsCrouching)
-        {
-            targetSpeed = crouchSpeed;
-        }
-        else if (sprintHeld)
-        {
-            targetSpeed = sprintSpeed;
-        }
+
 
         float moveMagnitude = Mathf.Clamp01(moveInput.magnitude);
-        float desiredHorizontalSpeed = targetSpeed * moveMagnitude;
+        float desiredHorizontalSpeed = walkSpeed * moveMagnitude;
         currentHorizontalSpeed = Mathf.MoveTowards(currentHorizontalSpeed, desiredHorizontalSpeed, acceleration * Time.deltaTime);
 
         Vector3 moveDirection = transform.right * moveInput.x + transform.forward * moveInput.y;
@@ -343,62 +222,6 @@ public class BasicMovement : MonoBehaviour
         controller.Move(velocity * Time.deltaTime);
     }
 
-    private void HandleCrouchHeight()
-    {
-        float targetHeight = IsCrouching ? crouchingHeight : standingHeight;
-        float currentHeight = Mathf.Lerp(controller.height, targetHeight, crouchLerpSpeed * Time.deltaTime);
-        
-        // Ensure minimum safe distance from controller radius
-        float minSafeHeight = controller.radius * 2.1f;
-        currentHeight = Mathf.Max(currentHeight, minSafeHeight);
-        
-        controller.height = currentHeight;
-        controller.center = new Vector3(controller.center.x, currentHeight * 0.5f, controller.center.z);
-    }
-
-    private void HandleCrouchCamera()
-    {
-        if (cameraRoot == null)
-        {
-            return;
-        }
-
-        float targetYOffset = IsCrouching ? -Mathf.Abs(crouchCameraDrop) : 0f;
-        Vector3 targetLocalPosition = cameraInitialLocalPosition + Vector3.up * targetYOffset;
-        cameraRoot.localPosition = Vector3.Lerp(cameraRoot.localPosition, targetLocalPosition, crouchLerpSpeed * Time.deltaTime);
-    }
-
-    private void TryCrouch()
-    {
-        if (IsCrouching)
-        {
-            if (!CanStandUp())
-            {
-                return;
-            }
-        }
-        IsCrouching = !IsCrouching;
-    }
-
-    private bool CanStandUp()
-    {
-        float radius = controller.radius * 0.95f;
-        float targetHeight = Mathf.Max(standingHeight, radius * 2f);
-        Vector3 center = transform.TransformPoint(new Vector3(controller.center.x, targetHeight * 0.5f, controller.center.z));
-
-        float halfLine = Mathf.Max(0f, targetHeight * 0.5f - radius);
-        Vector3 bottom = center - Vector3.up * halfLine;
-        Vector3 top = center + Vector3.up * halfLine;
-
-        bool controllerWasEnabled = controller.enabled;
-        controller.enabled = false;
-
-        int layerMask = ~(1 << gameObject.layer);
-        bool blocked = Physics.CheckCapsule(bottom, top, radius, layerMask, QueryTriggerInteraction.Ignore);
-
-        controller.enabled = controllerWasEnabled;
-        return !blocked;
-    }
 
     private void Interact()
     {
