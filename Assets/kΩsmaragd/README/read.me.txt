@@ -1,0 +1,22 @@
+﻿Hello dear Developer!
+
+In this package you will find 26 UI Elements ready to be implemented!
+If you have any questions or need assistance, feel free to contact me!
+
+
+My email : kosmaragd@gmail.com
+
+
+## How to Use
+1. Import the package into your Unity project.  
+2. Drag and drop the desired UI elements into your Canvas.  
+3. Customize colors, text, and layout as needed.  
+
+
+Not satisfied?  
+I offer 1 free revision plus 1 extra UI element as a bonus! 
+
+
+
+
+ΝΟΤΕ¨: This package is not affiliated with or endorsed by Unity Technologies. Unity is a trademark of Unity Technologies.
