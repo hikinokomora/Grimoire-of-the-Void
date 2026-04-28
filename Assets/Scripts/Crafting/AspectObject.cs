@@ -14,7 +14,7 @@ namespace GrimoireOfTheVoid.Crafting
         [Tooltip("Если true, объект не будет уничтожен при добавлении в котел (бесконечный базовый элемент).")]
         public bool isInfiniteSource = false;
 
-        // Здесь в будущем можно добавить физику, скрипты для Drag & Drop, 
-        // 3D-эффекты для HDRP, звуки или подсветку при наведении (Highlight).
+        // Опционально: Rigidbody на корне — <see cref="GrimoireOfTheVoid.Crafting.CraftingInteractor"/>
+        // вращает/двигает кинематикой (<see cref="UnityEngine.Rigidbody.MovePosition"/>) в режиме стола.
     }
 }
