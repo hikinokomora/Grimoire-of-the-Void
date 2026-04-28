@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -21,6 +22,22 @@ namespace GrimoireOfTheVoid.Crafting
         private static readonly Dictionary<string, OccultAspect> _byId = new Dictionary<string, OccultAspect>(StringComparer.Ordinal);
         private static readonly HashSet<string> _sessionRevealedIds = new HashSet<string>(StringComparer.Ordinal);
         private static readonly HashSet<string> _sessionImageRevealedIds = new HashSet<string>(StringComparer.Ordinal);
+
+        private sealed class Runner : MonoBehaviour { }
+        private static Runner _runner;
+        private static Coroutine _revealAllRoutine;
+        private static HashSet<string> _revealAllPrevRevealed;
+        private static HashSet<string> _revealAllPrevImages;
+        private static Dictionary<string, bool> _revealAllPrevSessionUnlocked;
+
+        private static Runner EnsureRunner()
+        {
+            if (_runner != null) return _runner;
+            GameObject go = new GameObject("OccultAspectRegistryRunner");
+            UnityEngine.Object.DontDestroyOnLoad(go);
+            _runner = go.AddComponent<Runner>();
+            return _runner;
+        }
 
         public static bool IsInitialized => _initialized;
 
@@ -146,6 +163,68 @@ namespace GrimoireOfTheVoid.Crafting
             EnsureDefaultFromResources();
             UnlockImageForSession(aspect);
             NotifyBooks(goToPageForAspect ? aspect : null);
+        }
+
+        public static void RevealAllForSecondsAndNotifyUI(float seconds)
+        {
+            EnsureDefaultFromResources();
+            if (!_initialized) return;
+            Runner r = EnsureRunner();
+            if (_revealAllRoutine != null)
+            {
+                r.StopCoroutine(_revealAllRoutine);
+                RestoreRevealAllSnapshot();
+            }
+
+            _revealAllPrevRevealed = new HashSet<string>(_sessionRevealedIds, StringComparer.Ordinal);
+            _revealAllPrevImages = new HashSet<string>(_sessionImageRevealedIds, StringComparer.Ordinal);
+            _revealAllPrevSessionUnlocked = new Dictionary<string, bool>(StringComparer.Ordinal);
+
+            for (int i = 0; i < _ordered.Count; i++)
+            {
+                OccultAspect a = _ordered[i];
+                if (a == null || string.IsNullOrEmpty(a.ID)) continue;
+                OccultAspect c = GetCanonical(a) ?? a;
+                if (c != null) _revealAllPrevSessionUnlocked[c.ID] = c.sessionUnlocked;
+                _sessionRevealedIds.Add(a.ID);
+                _sessionImageRevealedIds.Add(a.ID);
+                if (c != null) c.sessionUnlocked = true;
+            }
+
+            NotifyBooks(null);
+            _revealAllRoutine = r.StartCoroutine(CoRestoreRevealAllAfter(seconds));
+        }
+
+        private static IEnumerator CoRestoreRevealAllAfter(float seconds)
+        {
+            if (seconds > 0f) yield return new WaitForSeconds(seconds);
+            RestoreRevealAllSnapshot();
+            NotifyBooks(null);
+            _revealAllRoutine = null;
+        }
+
+        private static void RestoreRevealAllSnapshot()
+        {
+            if (_revealAllPrevRevealed == null || _revealAllPrevImages == null || _revealAllPrevSessionUnlocked == null) return;
+
+            _sessionRevealedIds.Clear();
+            foreach (string id in _revealAllPrevRevealed) _sessionRevealedIds.Add(id);
+
+            _sessionImageRevealedIds.Clear();
+            foreach (string id in _revealAllPrevImages) _sessionImageRevealedIds.Add(id);
+
+            for (int i = 0; i < _ordered.Count; i++)
+            {
+                OccultAspect a = _ordered[i];
+                if (a == null || string.IsNullOrEmpty(a.ID)) continue;
+                OccultAspect c = GetCanonical(a) ?? a;
+                if (c == null) continue;
+                if (_revealAllPrevSessionUnlocked.TryGetValue(c.ID, out bool prev)) c.sessionUnlocked = prev;
+            }
+
+            _revealAllPrevRevealed = null;
+            _revealAllPrevImages = null;
+            _revealAllPrevSessionUnlocked = null;
         }
 
         private static void NotifyBooks(OccultAspect focusPhysicalBookPage)

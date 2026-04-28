@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.OccultAspect
   ID: slime
   DisplayName: "\u0421\u043B\u0438\u0437\u044C"
-  prefab: {fileID: 8021081072044504575, guid: 65b249802573d8c40ae5b3b5793a8cc4, type: 3}
+  prefab: {fileID: 3873115078536622374, guid: 65b249802573d8c40ae5b3b5793a8cc4, type: 3}
   description: "\u041C\u0435\u0440\u0437\u043A\u0430\u044F \u0432\u043B\u0430\u0433\u0430
     \u043F\u043E\u0434\u0437\u0435\u043C\u0435\u043B\u0438\u0439."
   aspectIcon: {fileID: 21300000, guid: c70b8614da63e4c46b9f19edea7a75f3, type: 3}

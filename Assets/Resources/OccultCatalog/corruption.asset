@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.OccultAspect
   ID: corruption
   DisplayName: "\u041F\u043E\u0440\u0447\u0430"
-  prefab: {fileID: 0}
+  prefab: {fileID: 3561738235139781384, guid: ef367ba0110f67246912e2c5db1795d4, type: 3}
   description: "\u0411\u043E\u043B\u0435\u0437\u043D\u044C \u0441\u0430\u043C\u043E\u0439
     \u0441\u0443\u0442\u0438."
-  aspectIcon: {fileID: 0}
+  aspectIcon: {fileID: 21300000, guid: 2172f0cf2202fbd40acb2fa1d797c29a, type: 3}
   ingredientsText: "\u041A\u0440\u043E\u0432\u044C + \u0422\u044C\u043C\u0430"
   tier: 2
   isUnlocked: 0

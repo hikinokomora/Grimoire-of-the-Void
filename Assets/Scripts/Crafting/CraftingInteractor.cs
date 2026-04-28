@@ -12,6 +12,13 @@ namespace GrimoireOfTheVoid.Crafting
     /// </summary>
     public class CraftingInteractor : MonoBehaviour
     {
+        private static bool _copyNextClickedAspect;
+
+        public static void RequestCopyNextClickedAspect()
+        {
+            _copyNextClickedAspect = true;
+        }
+
         [Header("Сцена")]
         [SerializeField] private CauldronController cauldron;
 
@@ -175,7 +182,15 @@ namespace GrimoireOfTheVoid.Crafting
         {
             EndDrag(false);
 
-            if (aspect.isInfiniteSource)
+            if (_copyNextClickedAspect)
+            {
+                _copyNextClickedAspect = false;
+                _dragged = Instantiate(aspect, aspect.transform.position, aspect.transform.rotation);
+                _dragged.isInfiniteSource = false;
+                _dragWasCloned = true;
+                _dragged.ApplySpawnGrace(0.15f);
+            }
+            else if (aspect.isInfiniteSource)
             {
                 _dragged = Instantiate(aspect, aspect.transform.position, aspect.transform.rotation);
                 _dragged.isInfiniteSource = false;

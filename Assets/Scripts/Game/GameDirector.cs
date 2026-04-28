@@ -59,6 +59,31 @@ namespace GrimoireOfTheVoid.Game
         public event Action OnGameOver;
         public event Action OnVictory;
         private bool _victoryTriggered;
+        private int _forceNextGoalTier = -1;
+        private bool _extraLifeOnTimeout;
+        private bool _worldDrawn;
+        private bool _ignoreWrongDeliveryOnce;
+
+        public void GrantExtraLifeOnTimeoutOnce()
+        {
+            _extraLifeOnTimeout = true;
+        }
+
+        public void GrantIgnoreWrongDeliveryOnce()
+        {
+            _ignoreWrongDeliveryOnce = true;
+        }
+
+        public void MarkWorldCardDrawn()
+        {
+            _worldDrawn = true;
+        }
+
+        public void ForceNextGoalTierBumpOnce()
+        {
+            int cur = CurrentTier > 0 ? CurrentTier : 1;
+            _forceNextGoalTier = Mathf.Min(cur + 1, maxTier);
+        }
 
         private void Awake()
         {
@@ -100,6 +125,12 @@ namespace GrimoireOfTheVoid.Game
             if (TimeRemaining <= 0f)
             {
                 TimeRemaining = 0f;
+                if (_extraLifeOnTimeout)
+                {
+                    _extraLifeOnTimeout = false;
+                    PickNextGoalOrVictory();
+                    return;
+                }
                 TriggerGameOver();
             }
         }
@@ -112,6 +143,9 @@ namespace GrimoireOfTheVoid.Game
             CurrentTarget = null;
             IsRunning = false;
             _victoryTriggered = false;
+            _extraLifeOnTimeout = false;
+            _worldDrawn = false;
+            _ignoreWrongDeliveryOnce = false;
 
             BuildPoolsFromRegistry();
 
@@ -176,6 +210,12 @@ namespace GrimoireOfTheVoid.Game
 
             if (!IdsMatch(aspect, CurrentTarget))
             {
+                if (_ignoreWrongDeliveryOnce)
+                {
+                    _ignoreWrongDeliveryOnce = false;
+                    return false;
+                }
+                AddTime(-10f);
                 return false;
             }
 
@@ -283,13 +323,33 @@ namespace GrimoireOfTheVoid.Game
             int nextTier = MinTierWithItems();
             if (nextTier < 0)
             {
-                TriggerVictory();
-                return;
+                if (!_worldDrawn)
+                {
+                    RefillTier(maxTier);
+                    nextTier = MinTierWithItems();
+                    if (nextTier < 0)
+                    {
+                        TriggerVictory();
+                        return;
+                    }
+                }
+                else
+                {
+                    TriggerVictory();
+                    return;
+                }
             }
 
             _phaseTier = nextTier;
 
             int t = _phaseTier;
+            if (_forceNextGoalTier >= 1)
+            {
+                int desired = Mathf.Clamp(_forceNextGoalTier, 1, maxTier);
+                _forceNextGoalTier = -1;
+                if (HasAny(desired)) t = desired;
+                else if (desired > 1 && HasAny(desired - 1)) t = desired - 1;
+            }
             if (UnityEngine.Random.value < promoteChance && t < maxTier && HasAny(t + 1))
             {
                 t++;
@@ -315,6 +375,30 @@ namespace GrimoireOfTheVoid.Game
 
             float duration = GetBaseTimeForAspectTier(goal.tier);
             SetCurrentGoal(goal, duration);
+        }
+
+        private void RefillTier(int tier)
+        {
+            if (tier < 1 || tier > maxTier) return;
+            OccultAspectRegistry.EnsureDefaultFromResources();
+            IReadOnlyList<OccultAspect> all = OccultAspectRegistry.AllOrdered;
+            if (!_remainingByTier.TryGetValue(tier, out List<OccultAspect> bucket) || bucket == null)
+            {
+                bucket = new List<OccultAspect>();
+                _remainingByTier[tier] = bucket;
+            }
+            else
+            {
+                bucket.Clear();
+            }
+
+            for (int i = 0; i < all.Count; i++)
+            {
+                OccultAspect a = all[i];
+                if (a == null || a.tier != tier) continue;
+                OccultAspect canonical = OccultAspectRegistry.GetCanonical(a) ?? a;
+                if (!ContainsById(bucket, canonical.ID)) bucket.Add(canonical);
+            }
         }
 
         private void SetCurrentGoal(OccultAspect goal, float durationSeconds)

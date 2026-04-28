@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.OccultAspect
   ID: flesh
   DisplayName: "\u041F\u043B\u043E\u0442\u044C"
-  prefab: {fileID: -2502240646597816925, guid: 093f4e63aa0876d4dba89a76aa865f15, type: 3}
+  prefab: {fileID: 6848050907078862905, guid: 5ef2ee763561c6e4580d437b24daf472, type: 3}
   description: "\u041C\u044F\u0433\u043A\u0430\u044F \u043E\u0431\u043E\u043B\u043E\u0447\u043A\u0430."
   aspectIcon: {fileID: 21300000, guid: ab268bb2f335f8f4b9adff6544d1eacf, type: 3}
   ingredientsText: "\u041A\u0440\u043E\u0432\u044C + \u041A\u043E\u0441\u0442\u044C"

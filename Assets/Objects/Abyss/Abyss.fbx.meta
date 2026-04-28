@@ -1,9 +1,14 @@
 fileFormatVersion: 2
-guid: 970e66b2a097e5b47bf00fdaf4f7b738
+guid: 2d59ab0b93e86ed4ea107744853ed448
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Abyss
+    second: {fileID: 2100000, guid: 5b095282f89ee704da36919640f5c17d, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
