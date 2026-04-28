@@ -1,8 +1,10 @@
 #if UNITY_EDITOR
+using GrimoireOfTheVoid.Crafting;
 using GrimoireOfTheVoid.Game;
 using GrimoireOfTheVoid.UI;
 using TMPro;
 using UnityEditor;
+using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -15,6 +17,10 @@ public static class GameGoalSetupTool
     [MenuItem("Grimoire/🛠 Create Game Goal HUD (Auto-Setup)")]
     public static void CreateGoalHud()
     {
+        // Avoid Unity inspector holding onto a dead selection target (can throw GameObjectInspector m_Targets MissingReferenceException).
+        Selection.activeObject = null;
+        InternalEditorUtility.RepaintAllViews();
+
         Canvas canvas = FindOrCreateCanvas();
         FindOrCreateEventSystem();
 
@@ -97,31 +103,42 @@ public static class GameGoalSetupTool
         Button quitButton = CreateButton(gameOverPanel.transform, "QuitButton", "Quit", new Vector2(0.5f, 0.2f));
         Button victoryRestartButton = CreateButton(victoryPanel.transform, "VictoryRestartButton", "Restart", new Vector2(0.5f, 0.25f));
 
-        // Wire up private serialized fields via SerializedObject
-        var so = new SerializedObject(hud);
-        so.FindProperty("goalLabelText").objectReferenceValue = goalLabel;
-        so.FindProperty("goalNameText").objectReferenceValue = goalName;
-        so.FindProperty("goalIcon").objectReferenceValue = goalIcon;
-        so.FindProperty("timerText").objectReferenceValue = timerText;
-        so.FindProperty("timerFill").objectReferenceValue = timerFill;
-        so.FindProperty("gameOverPanel").objectReferenceValue = gameOverPanel;
-        so.FindProperty("victoryPanel").objectReferenceValue = victoryPanel;
-        so.FindProperty("restartButton").objectReferenceValue = restartButton;
-        so.FindProperty("victoryRestartButton").objectReferenceValue = victoryRestartButton;
-        so.FindProperty("quitButton").objectReferenceValue = quitButton;
-        so.ApplyModifiedPropertiesWithoutUndo();
+        // Wire up private serialized fields via SerializedObject.
+        // IMPORTANT: Do this in delayCall to avoid Unity Inspector grabbing half-created objects (can throw SerializedObjectNotCreatableException).
+        EditorApplication.delayCall += () =>
+        {
+            if (hud == null) return;
+            if (goalLabel == null || goalName == null || goalIcon == null || timerText == null || timerFill == null) return;
 
-        Selection.activeGameObject = hudRoot;
-        Debug.Log("<b>[Grimoire]</b> Game Goal HUD создан. Добавь/создай GameDirector, чтобы HUD начал обновляться.");
+            var so = new SerializedObject(hud);
+            so.FindProperty("goalLabelText").objectReferenceValue = goalLabel;
+            so.FindProperty("goalNameText").objectReferenceValue = goalName;
+            so.FindProperty("goalIcon").objectReferenceValue = goalIcon;
+            so.FindProperty("timerText").objectReferenceValue = timerText;
+            so.FindProperty("timerFill").objectReferenceValue = timerFill;
+            so.FindProperty("gameOverPanel").objectReferenceValue = gameOverPanel;
+            so.FindProperty("victoryPanel").objectReferenceValue = victoryPanel;
+            so.FindProperty("restartButton").objectReferenceValue = restartButton;
+            so.FindProperty("victoryRestartButton").objectReferenceValue = victoryRestartButton;
+            so.FindProperty("quitButton").objectReferenceValue = quitButton;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            // Do not force-select newly created objects: Selection changes are a common trigger for Inspector null-target bugs.
+            InternalEditorUtility.RepaintAllViews();
+            Debug.Log("<b>[Grimoire]</b> Game Goal HUD создан. Добавь/создай GameDirector, чтобы HUD начал обновляться.");
+        };
     }
 
     [MenuItem("Grimoire/🛠 Create GameDirector (Game Goal)")]
     public static void CreateGameDirector()
     {
+        Selection.activeObject = null;
+        InternalEditorUtility.RepaintAllViews();
+
         GameDirector existing = Object.FindFirstObjectByType<GameDirector>();
         if (existing != null)
         {
-            Selection.activeGameObject = existing.gameObject;
+            // Don't auto-select; see note above.
             Debug.Log("<b>[Grimoire]</b> GameDirector уже есть в сцене.");
             return;
         }
@@ -129,13 +146,16 @@ public static class GameGoalSetupTool
         GameObject go = new GameObject("GameDirector");
         Undo.RegisterCreatedObjectUndo(go, "Create GameDirector");
         go.AddComponent<GameDirector>();
-        Selection.activeGameObject = go;
+        InternalEditorUtility.RepaintAllViews();
         Debug.Log("<b>[Grimoire]</b> GameDirector создан.");
     }
 
     [MenuItem("Grimoire/🛠 Create Goal Delivery Spot (Trigger)")]
     public static void CreateGoalDeliverySpot()
     {
+        Selection.activeObject = null;
+        InternalEditorUtility.RepaintAllViews();
+
         // Zone host
         GameObject zoneGo = new GameObject("GoalDeliveryZone");
         Undo.RegisterCreatedObjectUndo(zoneGo, "Create GoalDeliveryZone");
@@ -151,13 +171,114 @@ public static class GameGoalSetupTool
         col.size = new Vector3(0.35f, 0.2f, 0.35f);
 
         GoalDeliveryZoneTrigger trig = triggerGo.AddComponent<GoalDeliveryZoneTrigger>();
-        var so = new SerializedObject(trig);
-        so.FindProperty("zone").objectReferenceValue = zoneGo.GetComponent<GoalDeliveryZone>();
-        so.FindProperty("thisTriggerCollider").objectReferenceValue = col;
-        so.ApplyModifiedPropertiesWithoutUndo();
+        EditorApplication.delayCall += () =>
+        {
+            if (trig == null) return;
+            var so = new SerializedObject(trig);
+            so.FindProperty("zone").objectReferenceValue = zoneGo.GetComponent<GoalDeliveryZone>();
+            so.FindProperty("thisTriggerCollider").objectReferenceValue = col;
+            so.ApplyModifiedPropertiesWithoutUndo();
 
-        Selection.activeGameObject = zoneGo;
-        Debug.Log("<b>[Grimoire]</b> GoalDeliveryZone + trigger созданы. Перемести их в нужное место на столе.");
+            InternalEditorUtility.RepaintAllViews();
+            Debug.Log("<b>[Grimoire]</b> GoalDeliveryZone + trigger созданы. Перемести их в нужное место на столе.");
+        };
+    }
+
+    [MenuItem("Grimoire/🛠 Create Aspect сдача (Goal Submit Field)")]
+    public static void CreateAspectSubmitField()
+    {
+        // Alias for clarity in your workflow.
+        CreateGoalDeliverySpot();
+    }
+
+    [MenuItem("Grimoire/🛠 Setup Crafting Table Physics (Selected)")]
+    public static void SetupCraftingTablePhysicsOnSelected()
+    {
+        GameObject[] selected = Selection.gameObjects;
+        if (selected == null || selected.Length == 0)
+        {
+            Debug.LogWarning("<b>[Grimoire]</b> Ничего не выделено. Выдели объект(ы) стола/коллайдеров и повтори.");
+            return;
+        }
+
+        int added = 0;
+        int touchedColliders = 0;
+        for (int i = 0; i < selected.Length; i++)
+        {
+            GameObject go = selected[i];
+            if (go == null) continue;
+
+            // Поддержка кейса: выделили родителя, а коллайдеры в детях.
+            Collider[] cols = go.GetComponentsInChildren<Collider>(true);
+            if (cols == null || cols.Length == 0)
+            {
+                // Если коллайдеров нет — всё равно можем повесить на сам объект, если так удобнее.
+                CraftingTableSurface existingOnGo = go.GetComponent<CraftingTableSurface>();
+                if (existingOnGo == null)
+                {
+                    CraftingTableSurface s = Undo.AddComponent<CraftingTableSurface>(go);
+                    if (s != null) added++;
+                }
+                continue;
+            }
+
+            for (int c = 0; c < cols.Length; c++)
+            {
+                if (cols[c] == null) continue;
+                touchedColliders++;
+                GameObject host = cols[c].gameObject;
+                if (host.GetComponent<CraftingTableSurface>() != null) continue;
+                CraftingTableSurface s = Undo.AddComponent<CraftingTableSurface>(host);
+                if (s != null) added++;
+            }
+        }
+
+        Debug.Log($"<b>[Grimoire]</b> CraftingTableSurface добавлен(о): {added}. Коллайдеров обработано: {touchedColliders}.");
+    }
+
+    [MenuItem("Grimoire/🛠 Setup Cauldron Drop Zone (Selected Collider)")]
+    public static void SetupCauldronDropZoneOnSelectedCollider()
+    {
+        GameObject go = Selection.activeGameObject;
+        if (go == null)
+        {
+            Debug.LogWarning("<b>[Grimoire]</b> Выдели GameObject с Collider (зона приёма котла) и повтори.");
+            return;
+        }
+
+        // Поддержка кейса: выделили родителя, но коллайдер на дочернем.
+        Collider c = go.GetComponent<Collider>();
+        if (c == null)
+        {
+            c = go.GetComponentInChildren<Collider>(true);
+            if (c == null)
+            {
+                Debug.LogWarning("<b>[Grimoire]</b> На выделенном объекте и в детях нет Collider. Выдели объект с Collider и повтори.");
+                return;
+            }
+            go = c.gameObject;
+        }
+
+        CauldronDropZone dz = go.GetComponent<CauldronDropZone>();
+        if (dz == null)
+        {
+            dz = Undo.AddComponent<CauldronDropZone>(go);
+        }
+
+        CauldronController pot = go.GetComponentInParent<CauldronController>();
+        if (pot == null)
+        {
+            pot = Object.FindFirstObjectByType<CauldronController>();
+        }
+
+        if (pot != null)
+        {
+            var so = new SerializedObject(dz);
+            so.FindProperty("cauldronOverride").objectReferenceValue = pot;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        Debug.Log("<b>[Grimoire]</b> CauldronDropZone добавлен на выделенный Collider. Теперь дроп в котёл стабилен.");
     }
 
     private static Canvas FindOrCreateCanvas()
