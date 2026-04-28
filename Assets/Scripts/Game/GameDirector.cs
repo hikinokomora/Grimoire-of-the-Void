@@ -20,6 +20,13 @@ namespace GrimoireOfTheVoid.Game
         [Tooltip("Шанс при выборе цели взять аспект на один тир выше (если в том тире ещё есть цели).")]
         [SerializeField] [Range(0f, 1f)] private float promoteChance = 0.15f;
 
+        [Header("Victory rules")]
+        [Tooltip("Если включено — победа наступает сразу после первого успешного крафта (любого аспекта).")]
+        [SerializeField] private bool victoryAfterFirstCraft = false;
+
+        [Tooltip("Если включено — когда игрок скрафтил текущую цель, она засчитывается сразу, без доставки в зону.")]
+        [SerializeField] private bool autoCompleteGoalOnCraft = false;
+
         [Header("Timer")]
         [Tooltip("Базовое время на цель по тиру аспекта (индекс 0 = тир 1, …).")]
         [SerializeField] private float[] baseTimePerTier = { 60f, 90f, 120f, 180f };
@@ -51,6 +58,7 @@ namespace GrimoireOfTheVoid.Game
         public event Action<OccultAspect> OnGoalCompleted;
         public event Action OnGameOver;
         public event Action OnVictory;
+        private bool _victoryTriggered;
 
         private void Awake()
         {
@@ -103,6 +111,7 @@ namespace GrimoireOfTheVoid.Game
             TimeRateMultiplier = 1f;
             CurrentTarget = null;
             IsRunning = false;
+            _victoryTriggered = false;
 
             BuildPoolsFromRegistry();
 
@@ -175,6 +184,30 @@ namespace GrimoireOfTheVoid.Game
 
             PickNextGoalOrVictory();
             return true;
+        }
+
+        /// <summary>
+        /// Вызывается после успешного крафта (из котла). Может дать моментальную победу или автозачесть текущую цель.
+        /// </summary>
+        public void NotifyAspectCrafted(OccultAspect crafted)
+        {
+            if (_victoryTriggered || crafted == null)
+            {
+                return;
+            }
+
+            if (victoryAfterFirstCraft)
+            {
+                TriggerVictory();
+                return;
+            }
+
+            if (autoCompleteGoalOnCraft && IsRunning && CurrentTarget != null && IdsMatch(crafted, CurrentTarget))
+            {
+                OccultAspect completed = CurrentTarget;
+                OnGoalCompleted?.Invoke(completed);
+                PickNextGoalOrVictory();
+            }
         }
 
         private void BuildPoolsFromRegistry()
@@ -250,9 +283,7 @@ namespace GrimoireOfTheVoid.Game
             int nextTier = MinTierWithItems();
             if (nextTier < 0)
             {
-                CurrentTarget = null;
-                IsRunning = false;
-                OnVictory?.Invoke();
+                TriggerVictory();
                 return;
             }
 
@@ -271,9 +302,7 @@ namespace GrimoireOfTheVoid.Game
 
             if (t < 0)
             {
-                CurrentTarget = null;
-                IsRunning = false;
-                OnVictory?.Invoke();
+                TriggerVictory();
                 return;
             }
 
@@ -303,6 +332,19 @@ namespace GrimoireOfTheVoid.Game
         {
             IsRunning = false;
             OnGameOver?.Invoke();
+        }
+
+        private void TriggerVictory()
+        {
+            if (_victoryTriggered)
+            {
+                return;
+            }
+
+            _victoryTriggered = true;
+            CurrentTarget = null;
+            IsRunning = false;
+            OnVictory?.Invoke();
         }
 
         private float GetBaseTimeForAspectTier(int aspectTier)

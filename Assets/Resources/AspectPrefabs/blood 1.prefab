@@ -12,8 +12,8 @@ GameObject:
   - component: {fileID: 8893069546831761415}
   - component: {fileID: 6669392254140982477}
   - component: {fileID: 1992919520333158202}
-  - component: {fileID: 6390266541463917959}
   - component: {fileID: 5437865967336941519}
+  - component: {fileID: 854824413326348966}
   m_Layer: 0
   m_Name: blood 1
   m_TagString: Untagged
@@ -106,9 +106,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13e96185e94af0b4d92e8e32884d02f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.AspectObject
-  aspectData: {fileID: 11400000, guid: 0c8f9ced8d15e9348984d68d43eeb24b, type: 2}
+  aspectData: {fileID: 11400000, guid: 9a938ffee5120cd4a9f8400682024a5a, type: 2}
   isInfiniteSource: 1
---- !u!54 &6390266541463917959
+--- !u!64 &5437865967336941519
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5156213222771983640}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -3305005561620884353, guid: 145658025298f7f4fbc87b4abde7555d, type: 3}
+--- !u!54 &854824413326348966
 Rigidbody:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -135,25 +157,3 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!64 &5437865967336941519
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5156213222771983640}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -3305005561620884353, guid: 145658025298f7f4fbc87b4abde7555d, type: 3}

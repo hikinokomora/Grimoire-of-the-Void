@@ -33,6 +33,12 @@
   - **`AspectManager.UnlockAspect`** delegates to `UnlockAndNotifyUI` (the serialized `recipeBook` / `physicalBook` fields on the component are not required for that sync; discovery is by type).
 - **Cauldron & table interaction**
   - **`CraftingInteractor`**: disabled until the player is in table mode; **`CraftingViewController`** enables it after the camera finishes moving and uses **`RequestSuppressNextInput`** to avoid the sit-down click also hitting the world. The interactor’s serialized **`CauldronController`** is for other flows (e.g. drop/click), not the lever.
+  - **Drag & drop invariants (do not regress)**
+    - **Drag is horizontal-only**: aspects must move strictly in a fixed horizontal plane while dragging (never “crawl” up collider walls).
+    - **Don’t let dragged aspects push other aspects**: colliders may be temporarily disabled during drag and restored on drop, so the dragged item cannot knock base aspects off the table.
+    - **Trigger colliders must be draggable**: raycasts are done with `QueryTriggerInteraction.Collide`, so `isTrigger` on aspect prefabs is supported for pickup.
+    - **Table station trigger must be ignored for placement**: a `CraftingTableStation` trigger collider is used for entering table mode and should not affect drag plane or drop placement; the physical table surface collider still must.
+    - **Pickup feel**: on grab, aspects can be lifted slightly (e.g. `pickupLift`) to avoid a “teleport” feeling on release, then allowed to settle on the table via physics.
   - **`CauldronController`**: on reset (lever), **`PlayResetVisualEffects`** — `resetSmokeEffect` + optional **`clearBurstEffects`**, even if the pot is already empty.
   - **`CauldronLever`**: ray hits require **`CauldronLever` on the same `GameObject` as the `Collider`**. Wire **`Cauldron`**. For **a single pull clip** and no separate idle: leave **`Idle State Name`** empty, set **`Pull State Name`** to the Animator state name; the script freezes at frame 0 (`speed = 0`) until `Pull()`. A **NullReference** in **`UnityEditor.Graphs.Edge`** when opening an Animator Controller usually means a **corrupted graph** — recreate the controller or reimport; editor-only, not gameplay code.
 - **Books startup**: `PhysicalRecipeBook` and `RecipeBook` call `EnsureDefaultFromResources()`; if the catalog is still **empty** after init (`Count == 0`), they log a clear error (add SO under `Resources/OccultCatalog` and/or fill `AspectManager`’s catalog).

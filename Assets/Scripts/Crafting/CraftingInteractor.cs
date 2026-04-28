@@ -25,6 +25,9 @@ namespace GrimoireOfTheVoid.Crafting
         [Tooltip("Если включено — во время drag применяется AlongNormalOffset (предмет будет визуально 'утоплен' в стол уже при перетаскивании). Обычно удобнее выключить и применять offset только при отпускании.")]
         [SerializeField] private bool applyAlongNormalOffsetWhileDragging = false;
 
+        [Tooltip("Насколько приподнимать предмет в момент взятия (м), чтобы не выглядело как 'телепорт' при отпускании.")]
+        [SerializeField] private float pickupLift = 0.03f;
+
         private Camera mainCamera;
 
         private AspectObject _dragged;
@@ -32,6 +35,8 @@ namespace GrimoireOfTheVoid.Crafting
         private Vector3 _dragOriginalPos;
         private Vector2 _dragGrabOffsetXz;
         private float _dragHeightOffset;
+        private float _dragFixedPlaneY;
+        private Transform _dragRoot;
 
         private Rigidbody _dragRb;
         private bool _dragStoredKinematic;
@@ -183,9 +188,23 @@ namespace GrimoireOfTheVoid.Crafting
             }
 
             _dragOriginalPos = _dragged.transform.position;
+            _dragFixedPlaneY = _dragOriginalPos.y + Mathf.Max(0f, pickupLift);
+            // Use the true prefab root for raycast exclusion (colliders often live on root, while AspectObject may be on a child).
+            _dragRoot = _dragged.transform.root != null ? _dragged.transform.root : _dragged.transform;
             // Сохраняем оффсет только по XZ, чтобы предмет не «улетал» вверх/вниз из‑за точки клика на верхушке коллайдера.
             Vector3 o = _dragged.transform.position;
-            _dragGrabOffsetXz = new Vector2(hitPoint.x - o.x, hitPoint.z - o.z);
+            // Для trigger-коллайдеров точка попадания луча часто даёт "ощущение, что курсор под столом"
+            // (особенно если коллайдер объёмный/смещён). В этом случае цепляем по центру bounds коллайдера.
+            Collider anyCol = _dragged.GetComponentInChildren<Collider>(true);
+            if (anyCol != null && anyCol.isTrigger)
+            {
+                Vector3 c = anyCol.bounds.center;
+                _dragGrabOffsetXz = new Vector2(c.x - o.x, c.z - o.z);
+            }
+            else
+            {
+                _dragGrabOffsetXz = new Vector2(hitPoint.x - o.x, hitPoint.z - o.z);
+            }
 
             // Высота относительно поверхности стола (если нашли поверхность под курсором при взятии).
             _dragHeightOffset = 0f;
@@ -199,6 +218,10 @@ namespace GrimoireOfTheVoid.Crafting
                 }
             }
 
+            // Visual lift on pickup (keeps drag strictly horizontal at the lifted height).
+            _dragged.transform.position = new Vector3(_dragged.transform.position.x, _dragFixedPlaneY, _dragged.transform.position.z);
+
+            // While dragging we disable colliders so the dragged item cannot push other aspects around.
             DisableDraggedColliders();
             BeginDragRigidbody();
         }
@@ -233,26 +256,17 @@ namespace GrimoireOfTheVoid.Crafting
             if (_dragged == null || mainCamera == null) return;
             Ray ray = ScreenPointToRayOnViewCamera(screenPosition);
 
-            if (TryRaycastTable(ray, out Vector3 tablePoint, out CraftingTableSurface surface, out Vector3 tableNormal))
+            // Hard lock: dragged aspects move strictly in the horizontal plane where they were grabbed.
+            float targetY = _dragFixedPlaneY;
+            if (TryIntersectHorizontalPlane(ray, targetY, out Vector3 pOnDragPlane))
             {
-                float baseY = tablePoint.y + (applyAlongNormalOffsetWhileDragging ? tableNormal.y * surface.AlongNormalOffset : 0f);
-                float targetY = baseY + _dragHeightOffset;
-
-                // Ключевой момент: XZ берём не из точки на столе, а из пересечения луча мыши с горизонтальной плоскостью на высоте объекта.
-                // Тогда «плоскость курсора» совпадает с высотой предмета и не создаёт ощущения «на ниточке».
-                Vector3 pOnDragPlane = tablePoint;
-                if (TryIntersectHorizontalPlane(ray, targetY, out Vector3 planePoint))
-                {
-                    pOnDragPlane = planePoint;
-                }
-
                 Vector3 target = new Vector3(
                     pOnDragPlane.x - _dragGrabOffsetXz.x,
                     targetY,
                     pOnDragPlane.z - _dragGrabOffsetXz.y);
                 MoveDraggedTo(target);
-                return;
             }
+            return;
 
             // Фолбэк: горизонтальная плоскость на текущей высоте.
             float y = _dragged.transform.position.y;
@@ -300,19 +314,55 @@ namespace GrimoireOfTheVoid.Crafting
             if (n <= 0) return false;
             SortHitsByDistance(_hits, n);
 
-            Transform dragRoot = _dragged != null ? _dragged.transform : null;
+            Transform dragRoot = _dragged != null ? _dragRoot : null;
+            // Prefer upward-facing hits to avoid selecting underside/side faces of the table collider.
+            CraftingTableSurface firstAnySurface = null;
+            Vector3 firstAnyPoint = default;
+            Vector3 firstAnyNormal = Vector3.up;
             for (int i = 0; i < n; i++)
             {
                 RaycastHit h = _hits[i];
                 if (h.collider == null) continue;
+                if (ShouldSkipForTablePlacement(h.collider)) continue;
                 if (dragRoot != null && (h.collider.transform == dragRoot || h.collider.transform.IsChildOf(dragRoot))) continue;
-                surface = h.collider.GetComponentInParent<CraftingTableSurface>();
-                if (surface == null) continue;
+                CraftingTableSurface s = h.collider.GetComponentInParent<CraftingTableSurface>();
+                if (s == null) continue;
+
+                if (firstAnySurface == null)
+                {
+                    firstAnySurface = s;
+                    firstAnyPoint = h.point;
+                    firstAnyNormal = h.normal;
+                }
+
+                // Accept only "top-ish" hits when possible.
+                if (h.normal.y < 0.2f) continue;
+
+                surface = s;
                 tablePoint = h.point;
                 tableNormal = h.normal;
                 return true;
             }
 
+            if (firstAnySurface != null)
+            {
+                surface = firstAnySurface;
+                tablePoint = firstAnyPoint;
+                tableNormal = firstAnyNormal;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool ShouldSkipForTablePlacement(Collider c)
+        {
+            if (c == null) return true;
+            // Table station triggers are used to enter crafting view and should not affect dragging/placement.
+            // Important: the table surface collider may live on the same object as CraftingTableStation,
+            // so we only skip the *trigger* collider(s), not the physical surface collider.
+            if (c.isTrigger && c.GetComponentInParent<CraftingTableStation>() != null) return true;
+            if (c.GetComponentInParent<CraftingTableEntryObstacle>() != null) return true;
             return false;
         }
 
@@ -320,9 +370,7 @@ namespace GrimoireOfTheVoid.Crafting
         {
             if (_dragged == null) return;
 
-            RestoreDraggedColliders();
-
-            Transform dragRoot = _dragged.transform;
+            Transform dragRoot = _dragRoot != null ? _dragRoot : _dragged.transform;
             RestoreDragRigidbody();
 
             Ray dropRay = new Ray(_dragged.transform.position + Vector3.up * 5f, Vector3.down);
@@ -340,6 +388,7 @@ namespace GrimoireOfTheVoid.Crafting
             {
                 RaycastHit h = _hits[i];
                 if (h.collider == null) continue;
+                if (ShouldSkipForTablePlacement(h.collider)) continue;
                 if (h.collider.transform == dragRoot || h.collider.transform.IsChildOf(dragRoot)) continue;
 
                 CauldronDropZone dz = h.collider.GetComponentInParent<CauldronDropZone>();
@@ -347,24 +396,59 @@ namespace GrimoireOfTheVoid.Crafting
                 if (pot == null) continue;
                 // Если в сцене несколько котлов, можно закрепить конкретный через CauldronDropZone.
                 pot.AddIngredient(_dragged);
+                RestoreDraggedColliders();
                 _dragged = null;
+                _dragRoot = null;
                 return;
             }
 
             // 2) Столешница
-            for (int i = 0; i < n; i++)
+            if (TryPickTopTableHit(_hits, n, dragRoot, out RaycastHit tableHit, out CraftingTableSurface surface))
             {
-                RaycastHit h = _hits[i];
-                if (h.collider == null) continue;
-                if (h.collider.transform == dragRoot || h.collider.transform.IsChildOf(dragRoot)) continue;
-                CraftingTableSurface surface = h.collider.GetComponentInParent<CraftingTableSurface>();
-                if (surface == null) continue;
-                _dragged.transform.position = h.point + h.normal * surface.AlongNormalOffset;
+                // Do NOT "snap" the object upward on release: it feels like a teleport.
+                // Dragging is already vertically locked; on release we keep the current pose and let physics
+                // settle it onto the table naturally.
+                //
+                // Safety: if the object somehow ended up below the table hit point, lift it to the surface.
+                Vector3 p = _dragged.transform.position;
+                if (p.y < tableHit.point.y)
+                {
+                    p.y = tableHit.point.y;
+                    _dragged.transform.position = p;
+                }
+                // Re-enable colliders after final placement.
+                RestoreDraggedColliders();
                 _dragged = null;
+                _dragRoot = null;
                 return;
             }
 
             EndDrag(false);
+        }
+
+        private static bool TryPickTopTableHit(RaycastHit[] buffer, int count, Transform dragRoot, out RaycastHit bestHit, out CraftingTableSurface bestSurface)
+        {
+            bestHit = default;
+            bestSurface = null;
+            float bestDist = float.PositiveInfinity;
+
+            // Prefer upward-facing surfaces to avoid underside hits (which would place objects under the table).
+            for (int i = 0; i < count; i++)
+            {
+                RaycastHit h = buffer[i];
+                if (h.collider == null) continue;
+                if (ShouldSkipForTablePlacement(h.collider)) continue;
+                if (dragRoot != null && (h.collider.transform == dragRoot || h.collider.transform.IsChildOf(dragRoot))) continue;
+                CraftingTableSurface s = h.collider.GetComponentInParent<CraftingTableSurface>();
+                if (s == null) continue;
+                if (h.normal.y < 0.2f) continue;
+                if (h.distance >= bestDist) continue;
+                bestDist = h.distance;
+                bestHit = h;
+                bestSurface = s;
+            }
+
+            return bestSurface != null;
         }
 
         private void DisableDraggedColliders()
@@ -423,6 +507,7 @@ namespace GrimoireOfTheVoid.Crafting
 
             _dragged = null;
             _dragWasCloned = false;
+            _dragRoot = null;
         }
 
         private void TryClickCauldronForCrafting(Vector2 screenPosition)
