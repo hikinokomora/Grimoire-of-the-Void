@@ -33,7 +33,7 @@ public class CardDraw : MonoBehaviour, IInteractable
         mats[0] = matPrefab[index];
         rend.materials = mats;
 
-        Invoke(nameof(ResetCooldown), 120f);
+        Invoke(nameof(ResetCooldown), 5f);
         Invoke(nameof(Apply), 5f);
     }
     private void ResetCooldown() => isOnCooldown = false;

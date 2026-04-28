@@ -101,6 +101,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2962024014378314480}
   - component: {fileID: 6547777333061645896}
+  - component: {fileID: 304423985394475261}
   m_Layer: 0
   m_Name: Taro
   m_TagString: Untagged
@@ -161,3 +162,26 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 1fa05e773e8ad334385e08f6655f5700, type: 2}
   prefab: {fileID: 481120517747037138, guid: ef16ee8884c4a3949b845d371ba2f858, type: 3}
   spawnLocation: {fileID: 2962024014378314480}
+  babe: []
+  tentacles: {fileID: 0}
+--- !u!65 &304423985394475261
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7358508165028727499}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.14065203, y: 0.07302505, z: 0.21591458}
+  m_Center: {x: -0.0020970106, y: -0.017828554, z: -0.0063205957}
