@@ -56,8 +56,6 @@ public class PhysicalPage : MonoBehaviour
             // ФИКС для обратной стороны листа - она перевернута по умолчанию, из-за чего читалась снизу вверх / задом наперед.
             // LookRotation выставляет вектора Canvas строго правильно для левой части книги (World +Y, +Z)
             backCanvas.localRotation = Quaternion.LookRotation(Vector3.up, Vector3.forward);
-            backCanvas.localPosition = new Vector3(0.5f, -0.003f, 0); // Легкий отступ от бумаги вниз
-            backCanvas.localScale = new Vector3(0.001f, 0.001f, 0.001f);
         }
     }
 
