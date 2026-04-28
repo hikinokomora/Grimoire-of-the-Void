@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d766565d8e1ac5641a183774ab409999, type: 3}
-  m_Name: FleshRecipie
+  m_Name: SpiritRecipie
   m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.Recipe
   inputs:
-  - {fileID: 11400000, guid: eacc15467359a114f847603bc0122992, type: 2}
-  - {fileID: 11400000, guid: 0c8f9ced8d15e9348984d68d43eeb24b, type: 2}
-  output: {fileID: 11400000, guid: ae9977be96ca2344ebf300a75547c63a, type: 2}
+  - {fileID: 11400000, guid: bb9bfdc33678b0a408f59763b9f876c1, type: 2}
+  - {fileID: 11400000, guid: 2ad71bf9cb39296479f8b7c069bede6b, type: 2}
+  output: {fileID: 11400000, guid: 2c81e7494da93654aad8407f5e36b8da, type: 2}

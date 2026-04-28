@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 758f3d11c90438f4bb16c50e6d079c6b, type: 3}
+  m_Name: Spirit
+  m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.OccultAspect
+  ID: Spirit
+  DisplayName: "\u0414\u0443\u0445"
+  prefab: {fileID: 5702325930092854820, guid: 89be88233fcd354418880909b5843de4, type: 3}
+  description: "\u0411\u0435\u0441\u043F\u043B\u043E\u0442\u043D\u0430\u044F \u044D\u043D\u0435\u0440\u0433\u0438\u044F"
+  aspectIcon: {fileID: 0}
+  ingredientsText: "\u041E\u0433\u043E\u043D\u044C + \u0422\u044C\u043C\u0430"
+  tier: 1
+  isUnlocked: 0

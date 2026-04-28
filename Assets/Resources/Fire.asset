@@ -15,8 +15,8 @@ MonoBehaviour:
   ID: fire
   DisplayName: "\u041E\u0433\u043E\u043D\u044C"
   prefab: {fileID: 3266438862739833938, guid: f45f3a65ef9b50f47bce5b23edc07efc, type: 3}
-  description: 
+  description: "\u041E\u0447\u0438\u0449\u0430\u044E\u0449\u0435\u0435 \u043F\u043B\u0430\u043C\u044F"
   aspectIcon: {fileID: 0}
-  ingredientsText: 
+  ingredientsText: "\u0411\u0430\u0437\u043E\u0432\u044B\u0439 \u0430\u0441\u043F\u0435\u043A\u0442"
   tier: 0
-  isUnlocked: 0
+  isUnlocked: 1

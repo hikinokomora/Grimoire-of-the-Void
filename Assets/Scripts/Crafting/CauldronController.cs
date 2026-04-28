@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using GrimoireOfTheVoid.Game;
 
 namespace GrimoireOfTheVoid.Crafting
 {
@@ -11,6 +12,13 @@ namespace GrimoireOfTheVoid.Crafting
         [Header("База данных рецептов")]
         [Tooltip("Список всех доступных рецептов. Назначьте ScriptableObject рецептов в инспекторе.")]
         [SerializeField] private List<Recipe> availableRecipes = new List<Recipe>();
+
+        [Header("Рандомизация рецептов (на забег)")]
+        [Tooltip("Если включено — перед началом игры рецепты перемешиваются и (опционально) берётся только подмножество.")]
+        [SerializeField] private bool randomizeRecipesPerRun = false;
+
+        [Tooltip("Сколько рецептов активно в забеге. 0 = все. Работает только при включённом Randomize Recipes Per Run.")]
+        [SerializeField] [Min(0)] private int activeRecipesPerRun = 0;
 
         [Header("Текущее состояние")]
         [Tooltip("Список физических объектов аспектов, которые сейчас находятся в котле.")]
@@ -31,6 +39,41 @@ namespace GrimoireOfTheVoid.Crafting
         // [SerializeField] private float defaultCraftTime = 2f;
         // private float currentCraftTimer = 0f;
         // private bool isCrafting = false;
+
+        private readonly List<Recipe> _runtimeRecipes = new List<Recipe>();
+
+        private void Awake()
+        {
+            BuildRuntimeRecipes();
+        }
+
+        private void BuildRuntimeRecipes()
+        {
+            _runtimeRecipes.Clear();
+            if (availableRecipes == null || availableRecipes.Count == 0)
+            {
+                return;
+            }
+
+            _runtimeRecipes.AddRange(availableRecipes);
+
+            if (!randomizeRecipesPerRun)
+            {
+                return;
+            }
+
+            // Fisher–Yates shuffle
+            for (int i = _runtimeRecipes.Count - 1; i > 0; i--)
+            {
+                int j = UnityEngine.Random.Range(0, i + 1);
+                (_runtimeRecipes[i], _runtimeRecipes[j]) = (_runtimeRecipes[j], _runtimeRecipes[i]);
+            }
+
+            if (activeRecipesPerRun > 0 && activeRecipesPerRun < _runtimeRecipes.Count)
+            {
+                _runtimeRecipes.RemoveRange(activeRecipesPerRun, _runtimeRecipes.Count - activeRecipesPerRun);
+            }
+        }
 
         /// <summary>
         /// Добавляет физический аспект в текущий список для крафта.
@@ -89,14 +132,14 @@ namespace GrimoireOfTheVoid.Crafting
             string currentContents = string.Join(" + ", debugIDs);
             Debug.Log($"[Cauldron] Проверка рецептов... В котле лежит: [{currentContents}]");
 
-            if (availableRecipes == null || availableRecipes.Count == 0)
+            if (_runtimeRecipes.Count == 0)
             {
                 Debug.LogWarning("[Cauldron] ОШИБКА: База Рецептов пуста! Вы забыли добавить рецепты в котел (поле Available Recipes).");
                 return;
             }
 
             // Ищем первый рецепт, который совпадает с текущим набором ингредиентов
-            foreach (var recipe in availableRecipes)
+            foreach (var recipe in _runtimeRecipes)
             {
                 if (recipe == null) continue;
 
@@ -112,6 +155,12 @@ namespace GrimoireOfTheVoid.Crafting
                     
                     // Разблокировка в реестре и обновление книг (без обязательного AspectManager)
                     OccultAspectRegistry.UnlockAndNotifyUI(recipe.output);
+
+                    // Правила победы / цели на крафт
+                    if (GameDirector.Instance != null)
+                    {
+                        GameDirector.Instance.NotifyAspectCrafted(recipe.output);
+                    }
                     
                     // После успешного крафта очищаем котел
                     ClearIngredients();
@@ -150,7 +199,7 @@ namespace GrimoireOfTheVoid.Crafting
             OccultAspect resultData = null;
 
             // Ищем первый рецепт, который совпадает с текущим набором ингредиентов
-            foreach (var recipe in availableRecipes)
+            foreach (var recipe in _runtimeRecipes.Count > 0 ? _runtimeRecipes : availableRecipes)
             {
                 if (recipe != null && recipe.Matches(aspectDatas))
                 {
@@ -166,6 +215,11 @@ namespace GrimoireOfTheVoid.Crafting
                 SpawnResult(resultData);
                 
                 OccultAspectRegistry.UnlockAndNotifyUI(resultData);
+
+                if (GameDirector.Instance != null)
+                {
+                    GameDirector.Instance.NotifyAspectCrafted(resultData);
+                }
             }
             else
             {
@@ -189,15 +243,40 @@ namespace GrimoireOfTheVoid.Crafting
                 return;
             }
 
+            if (resultData == null)
+            {
+                Debug.LogError("[Cauldron] SpawnResult вызван с null resultData.");
+                return;
+            }
+
             if (resultData.prefab != null)
             {
                 AspectObject newObject = Instantiate(resultData.prefab, spawnPoint.position, spawnPoint.rotation);
                 newObject.aspectData = resultData;
+                return;
             }
-            else
+
+            // Fallback: allow prefabs in Resources/AspectPrefabs/<ID>.prefab
+            if (!string.IsNullOrEmpty(resultData.ID))
             {
-                Debug.LogError($"[Cauldron] Ошибка! У аспекта '{resultData.DisplayName}' ({resultData.ID}) не назначен 3D Префаб (поле Prefab в ScriptableObject)!");
+                GameObject fallback = Resources.Load<GameObject>($"AspectPrefabs/{resultData.ID}");
+                if (fallback != null)
+                {
+                    GameObject go = Instantiate(fallback, spawnPoint.position, spawnPoint.rotation);
+                    AspectObject ao = go.GetComponent<AspectObject>() ?? go.GetComponentInChildren<AspectObject>(true);
+                    if (ao != null)
+                    {
+                        ao.aspectData = resultData;
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[Cauldron] Заспавнен prefab из Resources/AspectPrefabs/{resultData.ID}, но на нём нет AspectObject. Крафт продолжен без привязки aspectData.");
+                    }
+                    return;
+                }
             }
+
+            Debug.LogError($"[Cauldron] Ошибка! У аспекта '{resultData.DisplayName}' ({resultData.ID}) не назначен 3D Префаб (поле Prefab в ScriptableObject) и нет Resources/AspectPrefabs/{resultData.ID}.prefab!");
         }
 
         /// <summary>
