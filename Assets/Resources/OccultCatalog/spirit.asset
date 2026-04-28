@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.OccultAspect
   ID: spirit
   DisplayName: "\u0414\u0443\u0445"
-  prefab: {fileID: 5702325930092854820, guid: 89be88233fcd354418880909b5843de4, type: 3}
+  prefab: {fileID: 3753444791473053939, guid: 4abd8316e8ab8ed418743df1c360002f, type: 3}
   description: "\u0411\u0435\u0441\u043F\u043B\u043E\u0442\u043D\u0430\u044F \u044D\u043D\u0435\u0440\u0433\u0438\u044F."
   aspectIcon: {fileID: 775654366, guid: 91157e7a87315c04f97657c473ebc12a, type: 3}
   ingredientsText: "\u041E\u0433\u043E\u043D\u044C + \u0422\u044C\u043C\u0430"
