@@ -11,6 +11,7 @@ public class CardDraw : MonoBehaviour
     private Transform spawnLocation;
     private int index;
     private string text = "";
+    private bool isFart = false;
 
     private bool isOnCooldown = false;
 
@@ -24,6 +25,7 @@ public class CardDraw : MonoBehaviour
         isOnCooldown = true;
 
         index = Random.Range(0, 21);
+        if (isFart && index is 3 or 6 or 11 or 12 or 13 or 15 or 16 or 18 or 19) { index = 0; }
         GameObject card = Instantiate(prefab, gameObject.transform.position, gameObject.transform.rotation);
         card.transform.SetParent(transform);
         Renderer rend = card.GetComponent<Renderer>();
@@ -59,7 +61,7 @@ public class CardDraw : MonoBehaviour
                 Invoke(nameof(RemoveTentackles), 210f);
                 text = "VI Аркан: Влюблённые"; break;
             case 7:
-                GameObject.FindGameObjectWithTag("Player").GetComponent<BasicMovement>.walkSpeed = 7;
+                GameObject.FindGameObjectWithTag("Player").GetComponent<BasicMovement>().walkSpeed = 7;
                 Invoke(nameof(SpeedBack), 100f);
                 text = "VII Аркан: Колесница"; break;
             case 8: 
@@ -67,9 +69,11 @@ public class CardDraw : MonoBehaviour
             case 9: 
                 text = "IX Аркан: Отшельник"; break;
             case 10: 
+                isFart = true;
+                Invoke(nameof(UnFart), 400f);
                 text = "X Аркан: Колесо фортуны"; break;
             case 11:
-                GameObject.FindGameObjectWithTag("Player").GetComponent<BasicMovement>.walkSpeed = 2;
+                GameObject.FindGameObjectWithTag("Player").GetComponent<BasicMovement>().walkSpeed = 2;
                 Invoke(nameof(SpeedBack), 100f);
                 text = "XI Аркан: Правосудие"; break;
             case 12: 
@@ -96,5 +100,6 @@ public class CardDraw : MonoBehaviour
     }
 
     private void RemoveTentackles() { tentacles.SetActive(false); }
-    private void SpeedBack() { GameObject.FindGameObjectWithTag("Player").GetComponent<BasicMovement>.walkSpeed = 4; }
+    private void SpeedBack() { GameObject.FindGameObjectWithTag("Player").GetComponent<BasicMovement>().walkSpeed = 4; }
+    private void UnFart() { isFart = false; }
 }
