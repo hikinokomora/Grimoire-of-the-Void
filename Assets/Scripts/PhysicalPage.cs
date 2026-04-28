@@ -56,8 +56,6 @@ public class PhysicalPage : MonoBehaviour
             // ФИКС для обратной стороны листа - она перевернута по умолчанию, из-за чего читалась снизу вверх / задом наперед.
             // LookRotation выставляет вектора Canvas строго правильно для левой части книги (World +Y, +Z)
             backCanvas.localRotation = Quaternion.LookRotation(Vector3.up, Vector3.forward);
-            backCanvas.localPosition = new Vector3(0.5f, -0.003f, 0); // Легкий отступ от бумаги вниз
-            backCanvas.localScale = new Vector3(0.001f, 0.001f, 0.001f);
         }
     }
 
@@ -77,7 +75,8 @@ public class PhysicalPage : MonoBehaviour
         string ingredients = isRevealed 
             ? (isBaseAspect ? "\n\n<b>Состав:</b>\n<color=#a2a2a2>Базовый элемент</color>" : $"\n\n<b>Состав:</b>\n{data.ingredientsText}") 
             : "\n\n<b>Состав:</b>\n<color=#888888>??? (Сначала создайте в котле)</color>";
-
+        frontDescText.lineSpacing = -17;
+        frontDescText.textWrappingMode = TextWrappingModes.Normal;
         if (frontDescText != null) frontDescText.text = baseDesc + ingredients;
         
         if (frontAspectImage != null)
@@ -125,7 +124,8 @@ public class PhysicalPage : MonoBehaviour
         string ingredients = isRevealed 
             ? (isBaseAspect ? "\n\n<b>Состав:</b>\n<color=#a2a2a2>Базовый элемент</color>" : $"\n\n<b>Состав:</b>\n{data.ingredientsText}") 
             : "\n\n<b>Состав:</b>\n<color=#888888>??? (Сначала создайте в котле)</color>";
-
+        backDescText.lineSpacing = -17;
+        backDescText.textWrappingMode = TextWrappingModes.Normal;
         if (backDescText != null) backDescText.text = baseDesc + ingredients;
         
         if (backAspectImage != null)
