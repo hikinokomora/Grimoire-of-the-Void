@@ -20,6 +20,10 @@ namespace GrimoireOfTheVoid.Crafting
         [Tooltip("Сколько рецептов активно в забеге. 0 = все. Работает только при включённом Randomize Recipes Per Run.")]
         [SerializeField] [Min(0)] private int activeRecipesPerRun = 0;
 
+        [Header("Авто-сброс несовместимой очередности")]
+        [Tooltip("Если включено — когда текущая последовательность ингредиентов уже не может совпасть НИ С ОДНИМ рецептом (даже если добавить ещё), котёл автоматически очищается.")]
+        [SerializeField] private bool autoClearOnImpossibleSequence = true;
+
         [Header("Текущее состояние")]
         [Tooltip("Список физических объектов аспектов, которые сейчас находятся в котле.")]
         [SerializeField] private List<AspectObject> currentIngredients = new List<AspectObject>();
@@ -138,6 +142,14 @@ namespace GrimoireOfTheVoid.Crafting
                 return;
             }
 
+            if (autoClearOnImpossibleSequence && !IsCompatiblePrefix(aspectDatas, _runtimeRecipes))
+            {
+                Debug.Log($"[Cauldron] ✗ Несовместимая последовательность: [{currentContents}]. Котёл очищен автоматически.");
+                ClearIngredients();
+                PlayResetVisualEffects();
+                return;
+            }
+
             // Ищем первый рецепт, который совпадает с текущим набором ингредиентов
             foreach (var recipe in _runtimeRecipes)
             {
@@ -173,6 +185,51 @@ namespace GrimoireOfTheVoid.Crafting
                               $"Ожидалось строго: [{expectedContents}], а получено: [{currentContents}].");
                 }
             }
+        }
+
+        private static bool IsCompatiblePrefix(List<OccultAspect> current, List<Recipe> recipes)
+        {
+            if (current == null || current.Count == 0 || recipes == null || recipes.Count == 0)
+            {
+                return true;
+            }
+
+            for (int r = 0; r < recipes.Count; r++)
+            {
+                Recipe recipe = recipes[r];
+                if (recipe == null || recipe.inputs == null)
+                {
+                    continue;
+                }
+
+                if (recipe.inputs.Count < current.Count)
+                {
+                    continue; // рецепт короче, уже не может совпасть
+                }
+
+                bool prefixOk = true;
+                for (int i = 0; i < current.Count; i++)
+                {
+                    OccultAspect a = current[i];
+                    OccultAspect expected = recipe.inputs[i];
+
+                    string idA = a != null && a.ID != null ? a.ID.Trim() : string.Empty;
+                    string idE = expected != null && expected.ID != null ? expected.ID.Trim() : string.Empty;
+
+                    if (!string.Equals(idA, idE, System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        prefixOk = false;
+                        break;
+                    }
+                }
+
+                if (prefixOk)
+                {
+                    return true; // есть хотя бы один рецепт, который ещё потенциально достижим
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
