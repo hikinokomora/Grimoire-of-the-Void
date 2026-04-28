@@ -1,7 +1,7 @@
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class CardDraw : MonoBehaviour
+public class CardDraw : MonoBehaviour, IInteractable
 {
     [SerializeField]
     private Material[] matPrefab;
@@ -19,7 +19,7 @@ public class CardDraw : MonoBehaviour
     [SerializeField] private GameObject[] babe;
     [SerializeField] private GameObject tentacles;
 
-    public void Gambling()
+    public void Interact()
     {
         if (isOnCooldown) return;
         isOnCooldown = true;
@@ -40,7 +40,7 @@ public class CardDraw : MonoBehaviour
 
     private void Apply()
     {
-        switch (index)
+        switch (7)
         {
             case 0: 
                 text = "0 Аркан: Шут"; break;
@@ -61,7 +61,7 @@ public class CardDraw : MonoBehaviour
                 Invoke(nameof(RemoveTentackles), 210f);
                 text = "VI Аркан: Влюблённые"; break;
             case 7:
-                GameObject.FindGameObjectWithTag("Player").GetComponent<BasicMovement>().walkSpeed = 7;
+                GameObject.FindGameObjectWithTag("Player").GetComponent<BasicMovement>().walkSpeed = 4.5f;
                 Invoke(nameof(SpeedBack), 100f);
                 text = "VII Аркан: Колесница"; break;
             case 8: 
@@ -73,7 +73,7 @@ public class CardDraw : MonoBehaviour
                 Invoke(nameof(UnFart), 400f);
                 text = "X Аркан: Колесо фортуны"; break;
             case 11:
-                GameObject.FindGameObjectWithTag("Player").GetComponent<BasicMovement>().walkSpeed = 2;
+                GameObject.FindGameObjectWithTag("Player").GetComponent<BasicMovement>().walkSpeed = 1f;
                 Invoke(nameof(SpeedBack), 100f);
                 text = "XI Аркан: Правосудие"; break;
             case 12: 
@@ -100,6 +100,6 @@ public class CardDraw : MonoBehaviour
     }
 
     private void RemoveTentackles() { tentacles.SetActive(false); }
-    private void SpeedBack() { GameObject.FindGameObjectWithTag("Player").GetComponent<BasicMovement>().walkSpeed = 4; }
+    private void SpeedBack() { GameObject.FindGameObjectWithTag("Player").GetComponent<BasicMovement>().walkSpeed = 2.5f; }
     private void UnFart() { isFart = false; }
 }
