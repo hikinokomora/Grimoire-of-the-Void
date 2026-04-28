@@ -1,3 +1,4 @@
+using GrimoireOfTheVoid.Game;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -18,6 +19,7 @@ public class CardDraw : MonoBehaviour, IInteractable
     [Header("For Arcanas")]
     [SerializeField] private GameObject[] babe;
     [SerializeField] private GameObject tentacles;
+    [SerializeField] private GameObject GayDirect;
 
     public void Interact()
     {
@@ -40,7 +42,7 @@ public class CardDraw : MonoBehaviour, IInteractable
 
     private void Apply()
     {
-        switch (7)
+        switch (index)
         {
             case 0: 
                 text = "0 Аркан: Шут"; break;
@@ -76,11 +78,13 @@ public class CardDraw : MonoBehaviour, IInteractable
                 GameObject.FindGameObjectWithTag("Player").GetComponent<BasicMovement>().walkSpeed = 1f;
                 Invoke(nameof(SpeedBack), 100f);
                 text = "XI Аркан: Правосудие"; break;
-            case 12: 
+            case 12:
+                GayDirect.GetComponent<GameDirector>().AddTime(-30);
                 text = "XII Аркан: Повешенный"; break;
             case 13: 
                 text = "XIII Аркан: Смерть"; break;
-            case 14: 
+            case 14:
+                GayDirect.GetComponent<GameDirector>().AddTime(60);
                 text = "XIV Аркан: Умеренность"; break;
             case 15: 
                 text = "XV Аркан: Дьявол"; break;
