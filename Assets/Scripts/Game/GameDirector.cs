@@ -60,6 +60,24 @@ namespace GrimoireOfTheVoid.Game
         public event Action OnVictory;
         private bool _victoryTriggered;
         private int _forceNextGoalTier = -1;
+        private bool _extraLifeOnTimeout;
+        private bool _worldDrawn;
+        private bool _ignoreWrongDeliveryOnce;
+
+        public void GrantExtraLifeOnTimeoutOnce()
+        {
+            _extraLifeOnTimeout = true;
+        }
+
+        public void GrantIgnoreWrongDeliveryOnce()
+        {
+            _ignoreWrongDeliveryOnce = true;
+        }
+
+        public void MarkWorldCardDrawn()
+        {
+            _worldDrawn = true;
+        }
 
         public void ForceNextGoalTierBumpOnce()
         {
@@ -107,6 +125,12 @@ namespace GrimoireOfTheVoid.Game
             if (TimeRemaining <= 0f)
             {
                 TimeRemaining = 0f;
+                if (_extraLifeOnTimeout)
+                {
+                    _extraLifeOnTimeout = false;
+                    PickNextGoalOrVictory();
+                    return;
+                }
                 TriggerGameOver();
             }
         }
@@ -119,6 +143,9 @@ namespace GrimoireOfTheVoid.Game
             CurrentTarget = null;
             IsRunning = false;
             _victoryTriggered = false;
+            _extraLifeOnTimeout = false;
+            _worldDrawn = false;
+            _ignoreWrongDeliveryOnce = false;
 
             BuildPoolsFromRegistry();
 
@@ -183,6 +210,12 @@ namespace GrimoireOfTheVoid.Game
 
             if (!IdsMatch(aspect, CurrentTarget))
             {
+                if (_ignoreWrongDeliveryOnce)
+                {
+                    _ignoreWrongDeliveryOnce = false;
+                    return false;
+                }
+                AddTime(-10f);
                 return false;
             }
 
@@ -290,8 +323,21 @@ namespace GrimoireOfTheVoid.Game
             int nextTier = MinTierWithItems();
             if (nextTier < 0)
             {
-                TriggerVictory();
-                return;
+                if (!_worldDrawn)
+                {
+                    RefillTier(maxTier);
+                    nextTier = MinTierWithItems();
+                    if (nextTier < 0)
+                    {
+                        TriggerVictory();
+                        return;
+                    }
+                }
+                else
+                {
+                    TriggerVictory();
+                    return;
+                }
             }
 
             _phaseTier = nextTier;
@@ -329,6 +375,30 @@ namespace GrimoireOfTheVoid.Game
 
             float duration = GetBaseTimeForAspectTier(goal.tier);
             SetCurrentGoal(goal, duration);
+        }
+
+        private void RefillTier(int tier)
+        {
+            if (tier < 1 || tier > maxTier) return;
+            OccultAspectRegistry.EnsureDefaultFromResources();
+            IReadOnlyList<OccultAspect> all = OccultAspectRegistry.AllOrdered;
+            if (!_remainingByTier.TryGetValue(tier, out List<OccultAspect> bucket) || bucket == null)
+            {
+                bucket = new List<OccultAspect>();
+                _remainingByTier[tier] = bucket;
+            }
+            else
+            {
+                bucket.Clear();
+            }
+
+            for (int i = 0; i < all.Count; i++)
+            {
+                OccultAspect a = all[i];
+                if (a == null || a.tier != tier) continue;
+                OccultAspect canonical = OccultAspectRegistry.GetCanonical(a) ?? a;
+                if (!ContainsById(bucket, canonical.ID)) bucket.Add(canonical);
+            }
         }
 
         private void SetCurrentGoal(OccultAspect goal, float durationSeconds)

@@ -17,6 +17,8 @@ public class CardDraw : MonoBehaviour, IInteractable
     private int index;
     private string text = "";
     private bool isFart = false;
+    private float _prevWalkSpeed;
+    private bool _hasPrevWalkSpeed;
 
     private bool isOnCooldown = false;
 
@@ -93,8 +95,7 @@ public class CardDraw : MonoBehaviour, IInteractable
             case 7:
                 title = "Колесница";
                 desc = "Скорость передвижения х2";
-                GameObject.FindGameObjectWithTag("Player").GetComponent<BasicMovement>().walkSpeed = 4.5f;
-                Invoke(nameof(SpeedBack), 100f);
+                ApplySpeedMultiplier(2f, 100f);
                 text = "VII Аркан: Колесница"; break;
             case 8: 
                 title = "Сила";
@@ -102,6 +103,7 @@ public class CardDraw : MonoBehaviour, IInteractable
             case 9: 
                 title = "Отшельник";
                 desc = "1 неправильный крафт без наказания";
+                GayDirect.GetComponent<GameDirector>().GrantIgnoreWrongDeliveryOnce();
                 text = "IX Аркан: Отшельник"; break;
             case 10: 
                 title = "Колесо фортуны";
@@ -112,8 +114,7 @@ public class CardDraw : MonoBehaviour, IInteractable
             case 11:
                 title = "Правосудие";
                 desc = "Скорость передвижения х0.5";
-                GameObject.FindGameObjectWithTag("Player").GetComponent<BasicMovement>().walkSpeed = 1f;
-                Invoke(nameof(SpeedBack), 100f);
+                ApplySpeedMultiplier(0.5f, 100f);
                 text = "XI Аркан: Правосудие"; break;
             case 12:
                 title = "Повешенный";
@@ -128,7 +129,7 @@ public class CardDraw : MonoBehaviour, IInteractable
             case 14:
                 title = "Умеренность";
                 desc = "Время даётся";
-                GayDirect.GetComponent<GameDirector>().AddTime(60);
+                GayDirect.GetComponent<GameDirector>().AddTime(30);
                 text = "XIV Аркан: Умеренность"; break;
             case 15: 
                 title = "Дьявол";
@@ -155,16 +156,42 @@ public class CardDraw : MonoBehaviour, IInteractable
             case 20: 
                 title = "Суд";
                 desc = "Доп жизнь";
+                GayDirect.GetComponent<GameDirector>().GrantExtraLifeOnTimeoutOnce();
                 text = "XX Аркан: Суд"; break;
             case 21: 
                 title = "Мир";
                 desc = "Даёт возможность закончить игру (висит над столом компонентов)";
+                GayDirect.GetComponent<GameDirector>().MarkWorldCardDrawn();
                 text = "XXI Аркан: Мир"; break;
         }
         OnCardInfo?.Invoke(title, desc);
     }
 
     private void RemoveTentackles() { tentacles.SetActive(false); }
-    private void SpeedBack() { GameObject.FindGameObjectWithTag("Player").GetComponent<BasicMovement>().walkSpeed = 2.5f; }
+    private void ApplySpeedMultiplier(float mult, float seconds)
+    {
+        var player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null) return;
+        var m = player.GetComponent<BasicMovement>();
+        if (m == null) return;
+        if (!_hasPrevWalkSpeed)
+        {
+            _prevWalkSpeed = m.walkSpeed;
+            _hasPrevWalkSpeed = true;
+        }
+        CancelInvoke(nameof(SpeedBack));
+        m.walkSpeed = _prevWalkSpeed * mult;
+        if (seconds > 0f) Invoke(nameof(SpeedBack), seconds);
+    }
+
+    private void SpeedBack()
+    {
+        var player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null) return;
+        var m = player.GetComponent<BasicMovement>();
+        if (m == null) return;
+        if (_hasPrevWalkSpeed) m.walkSpeed = _prevWalkSpeed;
+        _hasPrevWalkSpeed = false;
+    }
     private void UnFart() { isFart = false; }
 }
