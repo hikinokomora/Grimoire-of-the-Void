@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 758f3d11c90438f4bb16c50e6d079c6b, type: 3}
   m_Name: mutant
   m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.OccultAspect
-  ID: 
-  DisplayName: 
-  prefab: {fileID: 0}
-  description: 
-  aspectIcon: {fileID: 0}
-  ingredientsText: 
-  tier: 0
+  ID: mutant
+  DisplayName: "\u041C\u0443\u0442\u0430\u043D\u0442"
+  prefab: {fileID: 4088502740466479622, guid: 40f742db24d509c47bddc72b63dd61a7, type: 3}
+  description: "\u0418\u0441\u043A\u0430\u0436\u0435\u043D\u043D\u0430\u044F \u043C\u0435\u0440\u0437\u043E\u0441\u0442\u044C."
+  aspectIcon: {fileID: 21300000, guid: 0ed8d69278a81434fbec122592e482a1, type: 3}
+  ingredientsText: "\u041F\u043B\u043E\u0442\u044C + \u041F\u043E\u0440\u0447\u0430"
+  tier: 3
   isUnlocked: 0

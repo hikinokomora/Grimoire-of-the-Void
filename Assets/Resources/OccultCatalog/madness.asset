@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.OccultAspect
   ID: madness
   DisplayName: "\u0411\u0435\u0437\u0443\u043C\u0438\u0435"
-  prefab: {fileID: 0}
+  prefab: {fileID: -5976201072089744529, guid: e290f015b879ce340bb2dd76af2235ba, type: 3}
   description: "\u0420\u0430\u0437\u0443\u043C, \u0440\u0430\u0437\u043E\u0440\u0432\u0430\u043D\u043D\u044B\u0439
     \u0432 \u043A\u043B\u043E\u0447\u044C\u044F."
-  aspectIcon: {fileID: 0}
+  aspectIcon: {fileID: 21300000, guid: 20607c009b6649e4e9ab750c6f0e12cb, type: 3}
   ingredientsText: "\u0411\u0435\u0437\u0434\u043D\u0430 + \u041F\u043E\u0440\u0447\u0430"
   tier: 3
   isUnlocked: 0
