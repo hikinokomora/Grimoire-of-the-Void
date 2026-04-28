@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 758f3d11c90438f4bb16c50e6d079c6b, type: 3}
+  m_Name: dust
+  m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.OccultAspect
+  ID: dust
+  DisplayName: "\u041F\u0440\u0430\u0445"
+  prefab: {fileID: 0}
+  description: "\u0417\u0430\u0431\u044B\u0442\u044B\u0435 \u043E\u0441\u0442\u0430\u043D\u043A\u0438."
+  aspectIcon: {fileID: 0}
+  ingredientsText: "\u0422\u044C\u043C\u0430 + \u041F\u0435\u043F\u0435\u043B"
+  tier: 2
+  isUnlocked: 0

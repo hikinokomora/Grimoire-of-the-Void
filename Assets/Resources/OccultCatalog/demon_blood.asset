@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 758f3d11c90438f4bb16c50e6d079c6b, type: 3}
+  m_Name: demon_blood
+  m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.OccultAspect
+  ID: demon_blood
+  DisplayName: "\u0414\u0435\u043C\u043E\u043D-\u043A\u0440\u043E\u0432\u044C"
+  prefab: {fileID: 4692479742029839624, guid: 92430623fdf7c554aad6d8201256f3ae, type: 3}
+  description: "\u041A\u0438\u043F\u0438\u0442 \u0438 \u043E\u0431\u0436\u0438\u0433\u0430\u0435\u0442."
+  aspectIcon: {fileID: 21300000, guid: 1df2633d4cd6b774a8d27d2fe05d9dab, type: 3}
+  ingredientsText: "\u041A\u0440\u043E\u0432\u044C + \u041E\u0433\u043E\u043D\u044C"
+  tier: 2
+  isUnlocked: 0
