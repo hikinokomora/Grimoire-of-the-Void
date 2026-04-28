@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.OccultAspect
   ID: demon_blood
   DisplayName: "\u0414\u0435\u043C\u043E\u043D-\u043A\u0440\u043E\u0432\u044C"
-  prefab: {fileID: 0}
+  prefab: {fileID: 4692479742029839624, guid: 92430623fdf7c554aad6d8201256f3ae, type: 3}
   description: "\u041A\u0438\u043F\u0438\u0442 \u0438 \u043E\u0431\u0436\u0438\u0433\u0430\u0435\u0442."
-  aspectIcon: {fileID: 0}
+  aspectIcon: {fileID: 21300000, guid: 1df2633d4cd6b774a8d27d2fe05d9dab, type: 3}
   ingredientsText: "\u041A\u0440\u043E\u0432\u044C + \u041E\u0433\u043E\u043D\u044C"
   tier: 2
   isUnlocked: 0

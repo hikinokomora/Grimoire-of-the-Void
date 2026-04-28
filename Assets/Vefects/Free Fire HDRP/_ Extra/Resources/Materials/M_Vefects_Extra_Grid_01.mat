@@ -9,8 +9,6 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: M_Vefects_Extra_Grid_01
   m_Shader: {fileID: 4800000, guid: bdec76083a39a714aa7f996f954d5c23, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords:
   - _ADD_PRECOMPUTED_VELOCITY
@@ -24,7 +22,6 @@ Material:
   stringTagMap: {}
   disabledShaderPasses:
   - TransparentBackface
-  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -85,10 +82,10 @@ Material:
     - _StencilRefGBuffer: 10
     - _StencilRefMV: 40
     - _StencilWriteMask: 6
-    - _StencilWriteMaskDepth: 9
+    - _StencilWriteMaskDepth: 8
     - _StencilWriteMaskDistortionVec: 4
-    - _StencilWriteMaskGBuffer: 15
-    - _StencilWriteMaskMV: 41
+    - _StencilWriteMaskGBuffer: 14
+    - _StencilWriteMaskMV: 40
     - _SupportDecals: 1
     - _SurfaceType: 0
     - _TransparentBackfaceEnable: 0
@@ -106,4 +103,3 @@ Material:
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
-  m_AllowLocking: 1
