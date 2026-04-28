@@ -75,7 +75,8 @@ public class PhysicalPage : MonoBehaviour
         string ingredients = isRevealed 
             ? (isBaseAspect ? "\n\n<b>Состав:</b>\n<color=#a2a2a2>Базовый элемент</color>" : $"\n\n<b>Состав:</b>\n{data.ingredientsText}") 
             : "\n\n<b>Состав:</b>\n<color=#888888>??? (Сначала создайте в котле)</color>";
-
+        frontDescText.lineSpacing = -17;
+        frontDescText.textWrappingMode = TextWrappingModes.Normal;
         if (frontDescText != null) frontDescText.text = baseDesc + ingredients;
         
         if (frontAspectImage != null)
@@ -123,7 +124,8 @@ public class PhysicalPage : MonoBehaviour
         string ingredients = isRevealed 
             ? (isBaseAspect ? "\n\n<b>Состав:</b>\n<color=#a2a2a2>Базовый элемент</color>" : $"\n\n<b>Состав:</b>\n{data.ingredientsText}") 
             : "\n\n<b>Состав:</b>\n<color=#888888>??? (Сначала создайте в котле)</color>";
-
+        backDescText.lineSpacing = -17;
+        backDescText.textWrappingMode = TextWrappingModes.Normal;
         if (backDescText != null) backDescText.text = baseDesc + ingredients;
         
         if (backAspectImage != null)
