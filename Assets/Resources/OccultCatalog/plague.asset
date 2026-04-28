@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.OccultAspect
   ID: plague
   DisplayName: "\u0427\u0443\u043C\u0430"
-  prefab: {fileID: 0}
+  prefab: {fileID: -6096486183341381739, guid: 4dd86bf66c9c3fb4b9891256f93ea31c, type: 3}
   description: "\u041D\u0435\u0432\u0438\u0434\u0438\u043C\u0430\u044F \u0441\u043C\u0435\u0440\u0442\u044C."
-  aspectIcon: {fileID: 0}
+  aspectIcon: {fileID: 21300000, guid: 1468661c700a2f6449d4ef44ed9033c4, type: 3}
   ingredientsText: "\u0413\u043D\u0438\u043B\u044C + \u041F\u0440\u0430\u0445 + \u0422\u044C\u043C\u0430
     (3)"
   tier: 3

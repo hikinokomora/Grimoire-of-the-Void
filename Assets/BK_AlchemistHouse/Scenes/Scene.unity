@@ -52574,9 +52574,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.CauldronController
   availableRecipes:
-  - {fileID: 11400000, guid: 2f53afd9976edfc4490da60ccab87427, type: 2}
-  - {fileID: 11400000, guid: 77fb52c38ad32e1449c7d74c9fb37dc3, type: 2}
-  - {fileID: 11400000, guid: 8f8cd6aab81dc5b4395e54c964edd244, type: 2}
+  - {fileID: 11400000, guid: 3fca42783936d4e4eae9f4f91fac1845, type: 2}
+  - {fileID: 11400000, guid: 6409dfae87b7b4244afbb8a3c1158403, type: 2}
+  - {fileID: 11400000, guid: 0931d61ba96acf64895aa64096f667a8, type: 2}
+  - {fileID: 11400000, guid: 1f0439896e1c0fe46a28fbad1e84de24, type: 2}
+  - {fileID: 11400000, guid: d7b2fcbb211d32f469dfa856d6ac39b6, type: 2}
+  - {fileID: 11400000, guid: bd0944e64b95b7246b9ea58e2ecc1a42, type: 2}
+  - {fileID: 11400000, guid: a474f55fc64dcbe498d08c2aed86427c, type: 2}
+  - {fileID: 11400000, guid: 0e40f5f9e0749d14b811b2a0f872db86, type: 2}
+  - {fileID: 11400000, guid: d62c9e66fbbfa444db0a48fd5b796460, type: 2}
+  - {fileID: 11400000, guid: 70fcd2d613d458642bbb83f133b4129f, type: 2}
+  - {fileID: 11400000, guid: fde0e2a7b91dce1498b7425647d3c4ff, type: 2}
+  - {fileID: 11400000, guid: d4094a2aec6fef6419e8b5449cf76502, type: 2}
+  - {fileID: 11400000, guid: e76328ed2e37a36449bceb970965bf05, type: 2}
+  - {fileID: 11400000, guid: d440d05d34ffdc248909ae346e6ace51, type: 2}
+  - {fileID: 11400000, guid: c0cf57cf4271ecd418386a89268cb82f, type: 2}
+  - {fileID: 11400000, guid: 9b336ed14c8a3624aa927be3c4a332ae, type: 2}
+  - {fileID: 11400000, guid: 581b73c09b7affa4d84d3f7e601d57b5, type: 2}
+  - {fileID: 11400000, guid: e34ecf146a518c14b8c1bfdf9b5736a6, type: 2}
+  - {fileID: 11400000, guid: 26b80c4cf0836074a8dee2e720c9580b, type: 2}
+  - {fileID: 11400000, guid: fdf6f8f76998dee4da12b3a94a04de5d, type: 2}
+  - {fileID: 11400000, guid: bfec00f810213db4b908764f7329053c, type: 2}
+  - {fileID: 11400000, guid: 3902efb590c395142941e9681c4e618a, type: 2}
   randomizeRecipesPerRun: 1
   activeRecipesPerRun: 0
   autoClearOnImpossibleSequence: 1

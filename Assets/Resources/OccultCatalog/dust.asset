@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.OccultAspect
   ID: dust
   DisplayName: "\u041F\u0440\u0430\u0445"
-  prefab: {fileID: -7988304595429952662, guid: e1c867dcd30e6174ebe26acfe4afeb5d, type: 3}
+  prefab: {fileID: -25737965132527006, guid: e1c867dcd30e6174ebe26acfe4afeb5d, type: 3}
   description: "\u0417\u0430\u0431\u044B\u0442\u044B\u0435 \u043E\u0441\u0442\u0430\u043D\u043A\u0438."
   aspectIcon: {fileID: 21300000, guid: 75acf7a62d5631e4c949d1f4d43767c6, type: 3}
   ingredientsText: "\u0422\u044C\u043C\u0430 + \u041F\u0435\u043F\u0435\u043B"

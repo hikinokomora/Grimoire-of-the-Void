@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 2d59ab0b93e86ed4ea107744853ed448
+guid: 140474fb5b573f448883a2151d10c4bf
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
@@ -7,8 +7,13 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Abyss
-    second: {fileID: 2100000, guid: 5b095282f89ee704da36919640f5c17d, type: 2}
+      name: lambert1
+    second: {fileID: 2100000, guid: 0f9233564c0d0c9478e7e382634f8896, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: pasted__lambert5
+    second: {fileID: 2100000, guid: a019fc723698e1a43bcdbea8dbbd77fd, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

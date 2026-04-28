@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.OccultAspect
   ID: ghost
   DisplayName: "\u041F\u0440\u0438\u0437\u0440\u0430\u043A"
-  prefab: {fileID: 0}
+  prefab: {fileID: 2927275768462679749, guid: ebd6f8d1d11f6b04b98814a26b800ca1, type: 3}
   description: "\u042D\u0445\u043E \u0447\u0443\u0436\u043E\u0439 \u0431\u043E\u043B\u0438."
-  aspectIcon: {fileID: 0}
+  aspectIcon: {fileID: 21300000, guid: 17ebfad5fd9b37f4a84eb118ef39f3c9, type: 3}
   ingredientsText: "\u041F\u0435\u043F\u0435\u043B + \u0414\u0443\u0445"
   tier: 3
   isUnlocked: 0

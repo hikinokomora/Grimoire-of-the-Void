@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 2d59ab0b93e86ed4ea107744853ed448
+guid: 3dc4d3f1cdc9a1b4c9d9afa7b0d9d462
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
@@ -7,8 +7,8 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Abyss
-    second: {fileID: 2100000, guid: 5b095282f89ee704da36919640f5c17d, type: 2}
+      name: Golem
+    second: {fileID: 2100000, guid: 30c0a36c8b4f38c40a8fc5c1133904be, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

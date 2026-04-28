@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 2d59ab0b93e86ed4ea107744853ed448
+guid: 738a34aaccf87114b9c44402169fcb31
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
@@ -7,8 +7,13 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Abyss
-    second: {fileID: 2100000, guid: 5b095282f89ee704da36919640f5c17d, type: 2}
+      name: Mask
+    second: {fileID: 2100000, guid: 31bdace6bac0a9d4898ed034eb8e2aa3, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Sign
+    second: {fileID: 2100000, guid: 2ac96e5ff664f8e46a61bbf9bfaf7437, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

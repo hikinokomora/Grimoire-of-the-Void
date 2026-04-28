@@ -1,9 +1,14 @@
 fileFormatVersion: 2
-guid: 702d23c767020de48a20544bcfe5409f
+guid: 3a5dd4a5f3f770343b08ac938297d0bb
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Ash_low
+    second: {fileID: 2100000, guid: 1fa0baa9a4ffac84da3dafdc76e35230, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
