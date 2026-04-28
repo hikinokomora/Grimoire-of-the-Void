@@ -26,6 +26,9 @@ public class CardDraw : MonoBehaviour, IInteractable
     [SerializeField] private GameObject[] babe;
     [SerializeField] private GameObject tentacles;
     [SerializeField] private GameObject GayDirect;
+    [SerializeField] private GameObject Var1;
+    [SerializeField] private GameObject Var2;
+    private bool isVar1=false;
 
     public void Interact()
     {
@@ -41,7 +44,7 @@ public class CardDraw : MonoBehaviour, IInteractable
         mats[0] = matPrefab[index];
         rend.materials = mats;
 
-        Invoke(nameof(ResetCooldown), 5f);
+        Invoke(nameof(ResetCooldown), 60f);
         Invoke(nameof(Apply), 5f);
     }
     private void ResetCooldown() => isOnCooldown = false;
@@ -137,7 +140,9 @@ public class CardDraw : MonoBehaviour, IInteractable
                 CraftingInteractor.RequestCopyNextClickedAspect();
                 GayDirect.GetComponent<GameDirector>().ForceNextGoalTierBumpOnce();
                 text = "XV Аркан: Дьявол"; break;
-            case 16: 
+            case 16:Var1.SetActive(isVar1);
+                isVar1=!isVar1;
+                Var2.SetActive(isVar1);
                 title = "Башня";
                 desc = "Переставляем оборудование";
                 text = "XVI Аркан: Башня"; break;

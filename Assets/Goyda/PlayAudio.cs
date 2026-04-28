@@ -3,8 +3,7 @@ using UnityEngine;
 public class PlayAudio : MonoBehaviour
 {
     private AudioSource audioSource;
-    [SerializeField] private AudioClip[] audioClip;
-    void Awake()
+    void Start()
     {
         audioSource = gameObject.GetComponent<AudioSource>();
         PlayClip();
@@ -12,7 +11,8 @@ public class PlayAudio : MonoBehaviour
 
     private void PlayClip()
     {
-        audioSource.PlayOneShot(audioClip[Random.Range(0, audioClip.Length-1)]);
-        Invoke(nameof(PlayClip), Random.Range(10,40));
+        audioSource.pitch = Random.Range(0.4f, 3f);
+        audioSource.Play();
+        Invoke(nameof(PlayClip), Random.Range(20,50));
     }
 }
