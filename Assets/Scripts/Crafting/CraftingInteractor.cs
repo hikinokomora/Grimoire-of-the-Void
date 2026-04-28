@@ -5,9 +5,10 @@ using UnityEngine.InputSystem;
 namespace GrimoireOfTheVoid.Crafting
 {
     /// <summary>
-    /// Перетаскивание на столе: плоскость = горизонт y = y pivot <b>в кадр взятия</b> (без «псевдостолешницы»).
-    /// Позиция: луч(m) ∩ плоскость → P; pivot O = (P.xz - (hit.xz - O0.xz), O0.y) — точка клика следует курсору по XZ, высота зафиксирована.
-    /// Камера: <see cref="CraftingViewController.GetViewCamera"/>, <see cref="viewCameraOverride"/> или Main.
+    /// Перетаскивание аспектов на столе (простое и предсказуемое).
+    /// - Взятие ЛКМ по коллайдеру, принадлежащему <see cref="AspectObject"/> (по parent тоже).
+    /// - Перемещение в плоскости столешницы: луч мыши пересекает коллайдеры с <see cref="CraftingTableSurface"/>.
+    /// - Отпускание: если под предметом зона котла (<see cref="CauldronDropZone"/>) — кладём в котёл, иначе оставляем на столе.
     /// </summary>
     public class CraftingInteractor : MonoBehaviour
     {
@@ -21,25 +22,26 @@ namespace GrimoireOfTheVoid.Crafting
         [Tooltip("Макс. длина луча от камеры при пересечении с плоскостью (м).")]
         [SerializeField] private float maxRayCastDistance = 30f;
 
+        [Tooltip("Если включено — во время drag применяется AlongNormalOffset (предмет будет визуально 'утоплен' в стол уже при перетаскивании). Обычно удобнее выключить и применять offset только при отпускании.")]
+        [SerializeField] private bool applyAlongNormalOffsetWhileDragging = false;
+
         private Camera mainCamera;
 
-        private AspectObject draggedObject;
-        private Vector3 originalPosition;
-        private bool wasCloned;
-        private bool suppressThisUpdate;
+        private AspectObject _dragged;
+        private bool _dragWasCloned;
+        private Vector3 _dragOriginalPos;
+        private Vector2 _dragGrabOffsetXz;
+        private float _dragHeightOffset;
 
-        private Vector3 pickObjectPos;
-        private Vector3 pickHitWorld;
-        private float dragLockedY;
+        private Rigidbody _dragRb;
+        private bool _dragStoredKinematic;
+        private bool _dragStoredGravity;
 
-        private Rigidbody dragBody;
-        private bool dragHadRigidbody;
-        private bool storedKinematic;
-        private bool storedUseGravity;
-        private Vector3 targetDragPosition;
+        private Collider[] _dragCols;
+        private bool[] _dragColsPrevEnabled;
 
-        private static readonly RaycastHit[] RaycastBuffer = new RaycastHit[32];
-        private static readonly RaycastHit[] DragTableRayBuffer = new RaycastHit[48];
+        private bool _suppressThisUpdate;
+        private static readonly RaycastHit[] _hits = new RaycastHit[64];
 
         private void Awake()
         {
@@ -48,15 +50,7 @@ namespace GrimoireOfTheVoid.Crafting
 
         private void OnDisable()
         {
-            if (draggedObject != null)
-            {
-                if (draggedObject.TryGetComponent<Collider>(out Collider c))
-                {
-                    c.enabled = true;
-                }
-            }
-            ReleaseDragPhysicsIfNeeded();
-            draggedObject = null;
+            EndDrag(false);
         }
 
         private void TryRefreshMainCamera()
@@ -80,14 +74,14 @@ namespace GrimoireOfTheVoid.Crafting
 
         public void RequestSuppressNextInput()
         {
-            suppressThisUpdate = true;
+            _suppressThisUpdate = true;
         }
 
         private void Update()
         {
-            if (suppressThisUpdate)
+            if (_suppressThisUpdate)
             {
-                suppressThisUpdate = false;
+                _suppressThisUpdate = false;
                 return;
             }
             if (Mouse.current == null)
@@ -101,18 +95,18 @@ namespace GrimoireOfTheVoid.Crafting
 
             if (left.wasPressedThisFrame)
             {
-                TryPickUp(mousePos);
+                TryBeginDrag(mousePos);
             }
 
-            if (draggedObject != null)
+            if (_dragged != null)
             {
                 if (left.isPressed)
                 {
-                    UpdateDragTarget(mousePos);
+                    UpdateDrag(mousePos);
                 }
                 if (left.wasReleasedThisFrame)
                 {
-                    TryDrop();
+                    TryDropAtCurrentPosition();
                 }
             }
 
@@ -122,7 +116,7 @@ namespace GrimoireOfTheVoid.Crafting
             }
         }
 
-        private void TryPickUp(Vector2 screenPosition)
+        private void TryBeginDrag(Vector2 screenPosition)
         {
             TryRefreshMainCamera();
             if (mainCamera == null)
@@ -132,7 +126,33 @@ namespace GrimoireOfTheVoid.Crafting
             }
 
             Ray ray = ScreenPointToRayOnViewCamera(screenPosition);
-            TryProcessPickRay(ray);
+            int count = Physics.RaycastNonAlloc(ray, _hits, 1000f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
+            if (count <= 0) return;
+
+            SortHitsByDistance(_hits, count);
+            for (int i = 0; i < count; i++)
+            {
+                RaycastHit h = _hits[i];
+                if (ShouldSkipForCraftingDrag(h)) continue;
+                if (h.collider == null) continue;
+
+                if (h.collider.TryGetComponent<CauldronLever>(out CauldronLever lever))
+                {
+                    lever.Pull();
+                    return;
+                }
+                if (h.collider.TryGetComponent<PhysicalBookButton>(out PhysicalBookButton bookButton))
+                {
+                    bookButton.ForceClick();
+                    return;
+                }
+
+                AspectObject aspect = h.collider.GetComponentInParent<AspectObject>();
+                if (aspect == null) continue;
+
+                BeginDrag(aspect, h.point);
+                return;
+            }
         }
 
         private static Vector2 GetPointerScreenPosition()
@@ -146,116 +166,116 @@ namespace GrimoireOfTheVoid.Crafting
             return mainCamera.ScreenPointToRay(new Vector3(screenPosition.x, screenPosition.y, 0f));
         }
 
-        private void TryProcessPickRay(Ray pickRay)
+        private void BeginDrag(AspectObject aspect, Vector3 hitPoint)
         {
-            int count = Physics.RaycastNonAlloc(pickRay, RaycastBuffer, 1000f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
-            if (count == 0) return;
+            EndDrag(false);
 
-            SortRaycastBufferByDistance(count);
-            for (int i = 0; i < count; i++)
+            if (aspect.isInfiniteSource)
             {
-                RaycastHit h = RaycastBuffer[i];
-                if (ShouldSkipForCraftingDrag(h)) continue;
-
-                if (h.collider.TryGetComponent<CauldronLever>(out CauldronLever lever))
-                {
-                    lever.Pull();
-                    return;
-                }
-                if (h.collider.TryGetComponent<PhysicalBookButton>(out PhysicalBookButton bookButton))
-                {
-                    bookButton.ForceClick();
-                    return;
-                }
-                if (h.collider.TryGetComponent<AspectObject>(out AspectObject aspect))
-                {
-                    if (aspect.isInfiniteSource)
-                    {
-                        draggedObject = Instantiate(aspect, aspect.transform.position, aspect.transform.rotation);
-                        draggedObject.isInfiniteSource = false;
-                        wasCloned = true;
-                    }
-                    else
-                    {
-                        draggedObject = aspect;
-                        originalPosition = aspect.transform.position;
-                        wasCloned = false;
-                    }
-
-                    if (draggedObject.TryGetComponent<Collider>(out Collider col))
-                    {
-                        col.enabled = false;
-                    }
-
-                    Transform t = draggedObject.transform;
-                    pickObjectPos = t.position;
-                    pickHitWorld = h.point;
-                    dragLockedY = t.position.y;
-
-                    BeginDragPhysics();
-                    targetDragPosition = t.position;
-                    if (dragBody != null)
-                    {
-                        dragBody.position = t.position;
-                    }
-                    return;
-                }
-            }
-        }
-
-        private void BeginDragPhysics()
-        {
-            ReleaseDragPhysicsIfNeeded();
-            if (draggedObject == null) return;
-            if (!draggedObject.TryGetComponent(out dragBody)) return;
-            dragHadRigidbody = true;
-            storedKinematic = dragBody.isKinematic;
-            storedUseGravity = dragBody.useGravity;
-            dragBody.isKinematic = true;
-            dragBody.useGravity = false;
-            dragBody.linearVelocity = Vector3.zero;
-            dragBody.angularVelocity = Vector3.zero;
-        }
-
-        private void ReleaseDragPhysicsIfNeeded()
-        {
-            if (!dragHadRigidbody || dragBody == null) return;
-            dragBody.isKinematic = storedKinematic;
-            dragBody.useGravity = storedUseGravity;
-            dragBody = null;
-            dragHadRigidbody = false;
-        }
-
-        private void UpdateDragTarget(Vector2 screenPosition)
-        {
-            if (draggedObject == null || mainCamera == null) return;
-            RecomputeWorldFromMouseRay(ScreenPointToRayOnViewCamera(screenPosition));
-        }
-
-        private void RecomputeWorldFromMouseRay(Ray ray)
-        {
-            if (!TryIntersectHorizontalPlane(ray, dragLockedY, out Vector3 p))
-            {
-                if (TryGetFirstTableSurfaceXzOnRay(ray, draggedObject.transform, out p))
-                {
-                    p = new Vector3(p.x, dragLockedY, p.z);
-                }
-                else
-                {
-                    return;
-                }
-            }
-
-            float gdx = pickHitWorld.x - pickObjectPos.x;
-            float gdz = pickHitWorld.z - pickObjectPos.z;
-            targetDragPosition = new Vector3(p.x - gdx, dragLockedY, p.z - gdz);
-            if (dragBody == null)
-            {
-                draggedObject.transform.position = targetDragPosition;
+                _dragged = Instantiate(aspect, aspect.transform.position, aspect.transform.rotation);
+                _dragged.isInfiniteSource = false;
+                _dragWasCloned = true;
             }
             else
             {
-                dragBody.position = targetDragPosition;
+                _dragged = aspect;
+                _dragWasCloned = false;
+            }
+
+            _dragOriginalPos = _dragged.transform.position;
+            // Сохраняем оффсет только по XZ, чтобы предмет не «улетал» вверх/вниз из‑за точки клика на верхушке коллайдера.
+            Vector3 o = _dragged.transform.position;
+            _dragGrabOffsetXz = new Vector2(hitPoint.x - o.x, hitPoint.z - o.z);
+
+            // Высота относительно поверхности стола (если нашли поверхность под курсором при взятии).
+            _dragHeightOffset = 0f;
+            if (mainCamera != null)
+            {
+                Ray ray = ScreenPointToRayOnViewCamera(GetPointerScreenPosition());
+                if (TryRaycastTable(ray, out Vector3 tablePoint, out CraftingTableSurface surface, out Vector3 tableNormal))
+                {
+                    float baseY = tablePoint.y + (applyAlongNormalOffsetWhileDragging ? tableNormal.y * surface.AlongNormalOffset : 0f);
+                    _dragHeightOffset = o.y - baseY;
+                }
+            }
+
+            DisableDraggedColliders();
+            BeginDragRigidbody();
+        }
+
+        private void BeginDragRigidbody()
+        {
+            _dragRb = null;
+            if (_dragged == null) return;
+            if (!_dragged.TryGetComponent(out _dragRb)) return;
+            _dragStoredKinematic = _dragRb.isKinematic;
+            _dragStoredGravity = _dragRb.useGravity;
+
+            if (!_dragRb.isKinematic)
+            {
+                _dragRb.linearVelocity = Vector3.zero;
+                _dragRb.angularVelocity = Vector3.zero;
+            }
+            _dragRb.useGravity = false;
+            _dragRb.isKinematic = true;
+        }
+
+        private void RestoreDragRigidbody()
+        {
+            if (_dragRb == null) return;
+            _dragRb.isKinematic = _dragStoredKinematic;
+            _dragRb.useGravity = _dragStoredGravity;
+            _dragRb = null;
+        }
+
+        private void UpdateDrag(Vector2 screenPosition)
+        {
+            if (_dragged == null || mainCamera == null) return;
+            Ray ray = ScreenPointToRayOnViewCamera(screenPosition);
+
+            if (TryRaycastTable(ray, out Vector3 tablePoint, out CraftingTableSurface surface, out Vector3 tableNormal))
+            {
+                float baseY = tablePoint.y + (applyAlongNormalOffsetWhileDragging ? tableNormal.y * surface.AlongNormalOffset : 0f);
+                float targetY = baseY + _dragHeightOffset;
+
+                // Ключевой момент: XZ берём не из точки на столе, а из пересечения луча мыши с горизонтальной плоскостью на высоте объекта.
+                // Тогда «плоскость курсора» совпадает с высотой предмета и не создаёт ощущения «на ниточке».
+                Vector3 pOnDragPlane = tablePoint;
+                if (TryIntersectHorizontalPlane(ray, targetY, out Vector3 planePoint))
+                {
+                    pOnDragPlane = planePoint;
+                }
+
+                Vector3 target = new Vector3(
+                    pOnDragPlane.x - _dragGrabOffsetXz.x,
+                    targetY,
+                    pOnDragPlane.z - _dragGrabOffsetXz.y);
+                MoveDraggedTo(target);
+                return;
+            }
+
+            // Фолбэк: горизонтальная плоскость на текущей высоте.
+            float y = _dragged.transform.position.y;
+            if (TryIntersectHorizontalPlane(ray, y, out Vector3 p))
+            {
+                Vector3 target = new Vector3(
+                    p.x - _dragGrabOffsetXz.x,
+                    y,
+                    p.z - _dragGrabOffsetXz.y);
+                MoveDraggedTo(target);
+            }
+        }
+
+        private void MoveDraggedTo(Vector3 worldPos)
+        {
+            if (_dragged == null) return;
+            if (_dragRb != null)
+            {
+                _dragRb.position = worldPos;
+            }
+            else
+            {
+                _dragged.transform.position = worldPos;
             }
         }
 
@@ -271,109 +291,138 @@ namespace GrimoireOfTheVoid.Crafting
             return true;
         }
 
-        private bool TryGetFirstTableSurfaceXzOnRay(Ray ray, Transform dragRoot, out Vector3 worldPoint)
+        private bool TryRaycastTable(Ray ray, out Vector3 tablePoint, out CraftingTableSurface surface, out Vector3 tableNormal)
         {
-            worldPoint = default;
-            int n = Physics.RaycastNonAlloc(ray, DragTableRayBuffer, maxRayCastDistance, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
-            if (n == 0) return false;
-            SortHitsByDistance(DragTableRayBuffer, n);
+            tablePoint = default;
+            surface = null;
+            tableNormal = Vector3.up;
+            int n = Physics.RaycastNonAlloc(ray, _hits, maxRayCastDistance, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
+            if (n <= 0) return false;
+            SortHitsByDistance(_hits, n);
+
+            Transform dragRoot = _dragged != null ? _dragged.transform : null;
             for (int i = 0; i < n; i++)
             {
-                RaycastHit h = DragTableRayBuffer[i];
+                RaycastHit h = _hits[i];
                 if (h.collider == null) continue;
-                if (IsUnderHierarchy(h.collider.transform, dragRoot)) continue;
-                var surface = h.collider.GetComponentInParent<CraftingTableSurface>();
+                if (dragRoot != null && (h.collider.transform == dragRoot || h.collider.transform.IsChildOf(dragRoot))) continue;
+                surface = h.collider.GetComponentInParent<CraftingTableSurface>();
                 if (surface == null) continue;
-                worldPoint = h.point + h.normal * surface.AlongNormalOffset;
+                tablePoint = h.point;
+                tableNormal = h.normal;
                 return true;
             }
+
             return false;
         }
 
-        private void TryDrop()
+        private void TryDropAtCurrentPosition()
         {
-            if (draggedObject == null) return;
+            if (_dragged == null) return;
 
-            if (draggedObject.TryGetComponent<Collider>(out Collider col))
+            RestoreDraggedColliders();
+
+            Transform dragRoot = _dragged.transform;
+            RestoreDragRigidbody();
+
+            Ray dropRay = new Ray(_dragged.transform.position + Vector3.up * 5f, Vector3.down);
+            int n = Physics.RaycastNonAlloc(dropRay, _hits, 20f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
+            if (n <= 0)
             {
-                col.enabled = true;
-            }
-
-            Transform dragRoot = draggedObject.transform;
-            ReleaseDragPhysicsIfNeeded();
-
-            Ray dropRay = new Ray(draggedObject.transform.position + Vector3.up * 5f, Vector3.down);
-            RaycastHit[] rawHits = Physics.RaycastAll(dropRay, 20f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
-            if (!CollectSortedDropHits(rawHits, dragRoot, out List<RaycastHit> hits))
-            {
-                ApplyDropMiss();
-                draggedObject = null;
+                EndDrag(false);
                 return;
             }
 
-            foreach (RaycastHit hit in hits)
+            SortHitsByDistance(_hits, n);
+
+            // 1) Котёл (явная зона) / фолбэк (любой котёл)
+            for (int i = 0; i < n; i++)
             {
-                CauldronController hitCauldron = hit.collider.GetComponentInParent<CauldronController>();
-                if (hitCauldron != null)
+                RaycastHit h = _hits[i];
+                if (h.collider == null) continue;
+                if (h.collider.transform == dragRoot || h.collider.transform.IsChildOf(dragRoot)) continue;
+
+                CauldronDropZone dz = h.collider.GetComponentInParent<CauldronDropZone>();
+                CauldronController pot = dz != null ? dz.GetCauldron() : h.collider.GetComponentInParent<CauldronController>();
+                if (pot == null) continue;
+                // Если в сцене несколько котлов, можно закрепить конкретный через CauldronDropZone.
+                pot.AddIngredient(_dragged);
+                _dragged = null;
+                return;
+            }
+
+            // 2) Столешница
+            for (int i = 0; i < n; i++)
+            {
+                RaycastHit h = _hits[i];
+                if (h.collider == null) continue;
+                if (h.collider.transform == dragRoot || h.collider.transform.IsChildOf(dragRoot)) continue;
+                CraftingTableSurface surface = h.collider.GetComponentInParent<CraftingTableSurface>();
+                if (surface == null) continue;
+                _dragged.transform.position = h.point + h.normal * surface.AlongNormalOffset;
+                _dragged = null;
+                return;
+            }
+
+            EndDrag(false);
+        }
+
+        private void DisableDraggedColliders()
+        {
+            RestoreDraggedColliders();
+            if (_dragged == null) return;
+            _dragCols = _dragged.GetComponentsInChildren<Collider>(true);
+            if (_dragCols == null || _dragCols.Length == 0) return;
+            _dragColsPrevEnabled = new bool[_dragCols.Length];
+            for (int i = 0; i < _dragCols.Length; i++)
+            {
+                Collider c = _dragCols[i];
+                if (c == null) continue;
+                _dragColsPrevEnabled[i] = c.enabled;
+                c.enabled = false;
+            }
+        }
+
+        private void RestoreDraggedColliders()
+        {
+            if (_dragCols == null || _dragColsPrevEnabled == null) return;
+            int n = Mathf.Min(_dragCols.Length, _dragColsPrevEnabled.Length);
+            for (int i = 0; i < n; i++)
+            {
+                Collider c = _dragCols[i];
+                if (c == null) continue;
+                c.enabled = _dragColsPrevEnabled[i];
+            }
+            _dragCols = null;
+            _dragColsPrevEnabled = null;
+        }
+
+        private void EndDrag(bool keepIfNotPlaced)
+        {
+            if (_dragged == null)
+            {
+                RestoreDraggedColliders();
+                RestoreDragRigidbody();
+                return;
+            }
+
+            RestoreDraggedColliders();
+            RestoreDragRigidbody();
+
+            if (!keepIfNotPlaced)
+            {
+                if (_dragWasCloned)
                 {
-                    hitCauldron.AddIngredient(draggedObject);
-                    draggedObject = null;
-                    return;
+                    Destroy(_dragged.gameObject);
+                }
+                else
+                {
+                    _dragged.transform.position = _dragOriginalPos;
                 }
             }
 
-            foreach (RaycastHit hit in hits)
-            {
-                var surface = hit.collider.GetComponentInParent<CraftingTableSurface>();
-                if (surface != null)
-                {
-                    draggedObject.transform.position = hit.point + hit.normal * surface.AlongNormalOffset;
-                    draggedObject = null;
-                    return;
-                }
-            }
-
-            ApplyDropMiss();
-            draggedObject = null;
-        }
-
-        private void ApplyDropMiss()
-        {
-            if (draggedObject == null) return;
-
-            if (wasCloned)
-            {
-                Destroy(draggedObject.gameObject);
-            }
-            else
-            {
-                draggedObject.transform.position = originalPosition;
-            }
-        }
-
-        private static bool IsUnderHierarchy(Transform node, Transform root)
-        {
-            if (node == null || root == null) return false;
-            return node == root || node.IsChildOf(root);
-        }
-
-        private static bool IsColliderOnDragged(Transform dragRoot, Collider c)
-        {
-            if (c == null || dragRoot == null) return true;
-            return c.transform == dragRoot || c.transform.IsChildOf(dragRoot);
-        }
-
-        private static bool CollectSortedDropHits(RaycastHit[] raw, Transform dragRoot, out List<RaycastHit> sorted)
-        {
-            sorted = new List<RaycastHit>();
-            for (int i = 0; i < raw.Length; i++)
-            {
-                if (IsColliderOnDragged(dragRoot, raw[i].collider)) continue;
-                sorted.Add(raw[i]);
-            }
-            if (sorted.Count == 0) return false;
-            sorted.Sort((a, b) => a.distance.CompareTo(b.distance));
-            return true;
+            _dragged = null;
+            _dragWasCloned = false;
         }
 
         private void TryClickCauldronForCrafting(Vector2 screenPosition)
@@ -381,13 +430,14 @@ namespace GrimoireOfTheVoid.Crafting
             TryRefreshMainCamera();
             if (mainCamera == null) return;
             Ray ray = ScreenPointToRayOnViewCamera(screenPosition);
-            int count = Physics.RaycastNonAlloc(ray, RaycastBuffer, 1000f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
+            int count = Physics.RaycastNonAlloc(ray, _hits, 1000f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
             if (count == 0) return;
-            SortRaycastBufferByDistance(count);
+            SortHitsByDistance(_hits, count);
             for (int i = 0; i < count; i++)
             {
-                RaycastHit h = RaycastBuffer[i];
+                RaycastHit h = _hits[i];
                 if (ShouldSkipForCraftingDrag(h)) continue;
+                if (h.collider == null) continue;
                 CauldronController hitCauldron = h.collider.GetComponentInParent<CauldronController>();
                 if (hitCauldron != null)
                 {
@@ -395,11 +445,6 @@ namespace GrimoireOfTheVoid.Crafting
                     return;
                 }
             }
-        }
-
-        private static void SortRaycastBufferByDistance(int count)
-        {
-            SortHitsByDistance(RaycastBuffer, count);
         }
 
         private static void SortHitsByDistance(RaycastHit[] buffer, int count)

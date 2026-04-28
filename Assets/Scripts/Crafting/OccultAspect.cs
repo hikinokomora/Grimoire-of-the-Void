@@ -30,6 +30,11 @@ namespace GrimoireOfTheVoid.Crafting
         [TextArea(2, 5)]
         public string ingredientsText;
 
+        [Header("Game Goal")]
+        [Tooltip("0 = базовый ингредиент (не цель Run). 1–4 = сложность целей для GameDirector.")]
+        [Min(0)]
+        public int tier = 0;
+
         [Tooltip("Открыт ли по умолчанию?")]
         public bool isUnlocked = false;
         
