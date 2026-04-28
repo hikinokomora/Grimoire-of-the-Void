@@ -99,6 +99,18 @@ namespace GrimoireOfTheVoid.Crafting
             _transitionRoutine = StartCoroutine(EnterCameraTransition(viewAnchor, cameraPivot));
         }
 
+        /// <summary>Камера для D&amp;D и луча из курсора в режиме стола: дочерняя у <see cref="BasicMovement.CameraPivot"/>, иначе Main.</summary>
+        public Camera GetViewCamera()
+        {
+            if (movement == null) return Camera.main;
+            if (movement.CameraPivot == null) return Camera.main;
+            Transform p = movement.CameraPivot;
+            var onPivot = p.GetComponent<Camera>();
+            if (onPivot != null) return onPivot;
+            var inChildren = p.GetComponentInChildren<Camera>(true);
+            return inChildren != null ? inChildren : Camera.main;
+        }
+
         public void Exit()
         {
             if (!_active || _isExiting)
