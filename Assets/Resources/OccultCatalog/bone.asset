@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 758f3d11c90438f4bb16c50e6d079c6b, type: 3}
+  m_Name: bone
+  m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.OccultAspect
+  ID: bone
+  DisplayName: "\u041A\u043E\u0441\u0442\u044C"
+  prefab: {fileID: 3377046774442911721, guid: 35401e9bae6c2834989c7b9c4d6c2cc9, type: 3}
+  description: "\u041A\u0430\u0440\u043A\u0430\u0441 \u0441\u043C\u0435\u0440\u0442\u043D\u044B\u0445."
+  aspectIcon: {fileID: 21300000, guid: b625520be6b9fe64c8252d8fec77a2ed, type: 3}
+  ingredientsText: 
+  tier: 1
+  isUnlocked: 1

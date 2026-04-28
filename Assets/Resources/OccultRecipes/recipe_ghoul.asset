@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d766565d8e1ac5641a183774ab409999, type: 3}
+  m_Name: recipe_ghoul
+  m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.Recipe
+  inputs:
+  - {fileID: 11400000, guid: faedcade6ac0ef54f9cbe6bebf5bfa7f, type: 2}
+  - {fileID: 11400000, guid: 9ea2cef8cf3208f4ba409f2e3d9f6a8e, type: 2}
+  - {fileID: 11400000, guid: c6bf87079ff26614bb364e0d84c6d791, type: 2}
+  output: {fileID: 11400000, guid: ad820fcc6059f044b91d19311059517d, type: 2}

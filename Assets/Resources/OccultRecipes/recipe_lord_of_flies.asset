@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d766565d8e1ac5641a183774ab409999, type: 3}
+  m_Name: recipe_lord_of_flies
+  m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.Recipe
+  inputs:
+  - {fileID: 11400000, guid: 697d68a2db1eccc4aa2aba436d901e9a, type: 2}
+  - {fileID: 11400000, guid: f8af6197a41b5a744928d4111e51bbe4, type: 2}
+  - {fileID: 11400000, guid: a8836ffc15a304e46be590aa7555a910, type: 2}
+  output: {fileID: 11400000, guid: 1602c7350f9330640afb17d17d0f0735, type: 2}
