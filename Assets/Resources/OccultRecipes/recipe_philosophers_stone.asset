@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: recipe_philosophers_stone
   m_EditorClassIdentifier: Assembly-CSharp::GrimoireOfTheVoid.Crafting.Recipe
   inputs:
-  - {fileID: 11400000, guid: e60d132dee78be645a8edc8c4ad545bb, type: 2}
   - {fileID: 11400000, guid: 2971d36be59fc0a48b8943676c401cea, type: 2}
+  - {fileID: 11400000, guid: e60d132dee78be645a8edc8c4ad545bb, type: 2}
   - {fileID: 11400000, guid: 1d8705f2ad6c5fb43a7634ceb2d89618, type: 2}
   output: {fileID: 11400000, guid: fcbedac878771f6468d6b2868e32d2bd, type: 2}

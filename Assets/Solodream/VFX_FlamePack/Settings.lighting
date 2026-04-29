@@ -9,7 +9,7 @@ LightingSettings:
   m_Name: Settings
   serializedVersion: 10
   m_EnableBakedLightmaps: 1
-  m_EnableRealtimeLightmaps: 1
+  m_EnableRealtimeLightmaps: 0
   m_RealtimeEnvironmentLighting: 1
   m_BounceScale: 1
   m_AlbedoBoost: 1
@@ -21,7 +21,7 @@ LightingSettings:
   m_UseMipmapLimits: 1
   m_BakeResolution: 100
   m_Padding: 6
-  m_LightmapCompression: 0
+  m_LightmapCompression: 3
   m_LightmapPackingMode: 1
   m_LightmapPackingMethod: 0
   m_XAtlasPackingAttempts: 16384
@@ -29,8 +29,8 @@ LightingSettings:
   m_XAtlasBlockAlign: 0
   m_XAtlasRepackUnderutilizedLightmaps: 1
   m_AO: 1
-  m_AOMaxDistance: 0.5
-  m_CompAOExponent: 0.7
+  m_AOMaxDistance: 1.2
+  m_CompAOExponent: 1
   m_CompAOExponentDirect: 0
   m_ExtractAO: 0
   m_MixedBakeMode: 0
