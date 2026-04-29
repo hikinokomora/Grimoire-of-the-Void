@@ -21,9 +21,10 @@ namespace GrimoireOfTheVoid.UI
         private const string SfxKey = "settings_sfx01";
         private const string SensitivityKey = "settings_sensitivity01";
 
-        [Header("Brightness remap (postExposure)")]
-        [SerializeField] private float minPostExposure = -2f;
-        [SerializeField] private float maxPostExposure = 4f;
+        [Header("Brightness remap (HDRP Exposure)")]
+        [Tooltip("Minecraft-like brightness in HDRP: use Fixed Exposure to reliably brighten/darken the whole frame.")]
+        [SerializeField] private float minFixedExposure = -2f;
+        [SerializeField] private float maxFixedExposure = 2f;
 
         [Header("Mouse sensitivity remap")]
         [SerializeField] private float minMouseSensitivity = 0.02f;
@@ -32,7 +33,7 @@ namespace GrimoireOfTheVoid.UI
         private static GlobalSettingsApplier _instance;
         private Volume _brightnessVolume;
         private VolumeProfile _brightnessProfile;
-        private ColorAdjustments _brightnessColorAdjustments;
+        private Exposure _brightnessExposure;
         private readonly Dictionary<int, float> _sfxBaseVolumes = new Dictionary<int, float>(256);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -65,11 +66,13 @@ namespace GrimoireOfTheVoid.UI
         private void OnEnable()
         {
             SceneManager.sceneLoaded += OnSceneLoaded;
+            AudioSettingsRuntime.SfxVolumeChanged += ApplySfxToTaggedAudioSources;
         }
 
         private void OnDisable()
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
+            AudioSettingsRuntime.SfxVolumeChanged -= ApplySfxToTaggedAudioSources;
         }
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -86,6 +89,11 @@ namespace GrimoireOfTheVoid.UI
             ApplyAllSettings();
         }
 
+        public static void ApplyNow()
+        {
+            _instance?.ApplyAllSettings();
+        }
+
         public void ApplyAllSettings()
         {
             ApplyAudio();
@@ -100,7 +108,6 @@ namespace GrimoireOfTheVoid.UI
 
             AudioSettingsRuntime.SetSfxVolume01(sfx01);
             MusicManager.Instance?.SetVolume(music01);
-
             ApplySfxToTaggedAudioSources(sfx01);
         }
 
@@ -137,9 +144,11 @@ namespace GrimoireOfTheVoid.UI
             _brightnessVolume.weight = 1f;
 
             _brightnessProfile = ScriptableObject.CreateInstance<VolumeProfile>();
-            _brightnessColorAdjustments = _brightnessProfile.Add<ColorAdjustments>();
-            _brightnessColorAdjustments.active = true;
-            _brightnessColorAdjustments.postExposure.overrideState = true;
+            _brightnessExposure = _brightnessProfile.Add<Exposure>();
+            _brightnessExposure.active = true;
+            _brightnessExposure.mode.overrideState = true;
+            _brightnessExposure.mode.Override(ExposureMode.Fixed);
+            _brightnessExposure.fixedExposure.overrideState = true;
             _brightnessVolume.profile = _brightnessProfile;
         }
 
@@ -148,12 +157,56 @@ namespace GrimoireOfTheVoid.UI
             EnsureBrightnessVolume();
 
             float b01 = Mathf.Clamp01(PlayerPrefs.GetFloat(BrightnessKey, 0.5f));
-            float postExposure = Mathf.Lerp(minPostExposure, maxPostExposure, b01);
+            // Slider convention (requested):
+            // - slider = 1 -> "center" (neutral exposure = 0)
+            // - slider = 0 -> max brightness (maxFixedExposure)
+            float fixedExposure = Mathf.Lerp(maxFixedExposure, 0f, b01);
 
-            if (_brightnessColorAdjustments != null)
+            if (_brightnessExposure != null)
             {
-                _brightnessColorAdjustments.postExposure.Override(postExposure);
+                _brightnessExposure.mode.overrideState = true;
+                _brightnessExposure.mode.Override(ExposureMode.Fixed);
+                _brightnessExposure.fixedExposure.overrideState = true;
+                _brightnessExposure.fixedExposure.Override(fixedExposure);
             }
+
+            // If the scene contains multiple volumes (global and/or local), ensure they all respect the brightness setting.
+            // This avoids cases where a stronger local volume overrides the global brightness volume.
+            var volumes = UnityEngine.Object.FindObjectsByType<Volume>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < volumes.Length; i++)
+            {
+                var v = volumes[i];
+                if (v == null) continue;
+                if (v == _brightnessVolume) continue;
+
+                VolumeProfile profile = GetOrCreateRuntimeProfile(v);
+                if (profile == null) continue;
+
+                if (!profile.TryGet(out Exposure exp) || exp == null)
+                {
+                    exp = profile.Add<Exposure>();
+                }
+
+                exp.active = true;
+                exp.mode.overrideState = true;
+                exp.mode.Override(ExposureMode.Fixed);
+                exp.fixedExposure.overrideState = true;
+                exp.fixedExposure.Override(fixedExposure);
+            }
+        }
+
+        private static VolumeProfile GetOrCreateRuntimeProfile(Volume v)
+        {
+            if (v == null) return null;
+
+            // Important: Volume.profile can point to sharedProfile until instantiated.
+            // We must avoid mutating assets (sharedProfile) at runtime.
+            if (v.sharedProfile != null && !v.HasInstantiatedProfile())
+            {
+                v.profile = Instantiate(v.sharedProfile);
+            }
+
+            return v.profile;
         }
 
         private void ApplySfxToTaggedAudioSources(float sfx01)

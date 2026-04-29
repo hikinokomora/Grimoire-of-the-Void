@@ -121,6 +121,16 @@ namespace GrimoireOfTheVoid.UI
             _isOpen = true;
             settingsCanvasRoot.SetActive(true);
 
+            // Sync sliders to the latest saved values (menu <-> in-game).
+            var controllers = settingsCanvasRoot.GetComponentsInChildren<SettingsMenuController>(true);
+            for (int i = 0; i < controllers.Length; i++)
+            {
+                if (controllers[i] != null)
+                {
+                    controllers[i].RefreshFromPrefs();
+                }
+            }
+
             CacheMovements();
             ApplyMovementState(false);
 

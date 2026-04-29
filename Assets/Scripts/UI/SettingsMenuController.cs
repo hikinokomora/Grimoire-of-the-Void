@@ -22,15 +22,14 @@ namespace GrimoireOfTheVoid.UI
 
         [Header("Brightness (HDRP)")]
         [SerializeField] private Volume globalVolume;
-        [SerializeField] private float minPostExposure = -2f;
-        [SerializeField] private float maxPostExposure = 4f;
+        [SerializeField] private float minFixedExposure = -2f;
+        [SerializeField] private float maxFixedExposure = 2f;
 
         [Header("Look")]
         [SerializeField] private float minMouseSensitivity = 0.02f;
         [SerializeField] private float maxMouseSensitivity = 0.25f;
 
-        private ColorAdjustments _colorAdjustments;
-        private bool _initialized;
+        private Exposure _exposure;
 
         private void Awake()
         {
@@ -40,16 +39,9 @@ namespace GrimoireOfTheVoid.UI
         private void OnEnable()
         {
             HookSliders(true);
-
-            if (!_initialized)
-            {
-                LoadSettingsIntoUIAndApply();
-                _initialized = true;
-            }
-            else
-            {
-                ApplyAllFromUI();
-            }
+            // Always resync from PlayerPrefs when the settings UI is opened,
+            // so menu settings and in-game settings stay consistent.
+            LoadSettingsIntoUIAndApply();
         }
 
         private void OnDisable()
@@ -99,6 +91,11 @@ namespace GrimoireOfTheVoid.UI
             ApplyAllFromUI();
         }
 
+        public void RefreshFromPrefs()
+        {
+            LoadSettingsIntoUIAndApply();
+        }
+
         private void ApplyAllFromUI()
         {
             if (brightnessSlider != null) OnBrightnessChanged(brightnessSlider.value);
@@ -112,13 +109,19 @@ namespace GrimoireOfTheVoid.UI
             PlayerPrefs.SetFloat(BrightnessKey, Mathf.Clamp01(value01));
             PlayerPrefs.Save();
 
-            if (_colorAdjustments == null)
+            // Match GlobalSettingsApplier slider convention:
+            // slider = 1 -> neutral (0), slider = 0 -> brightest (maxFixedExposure)
+            float fixedExposure = Mathf.Lerp(maxFixedExposure, 0f, Mathf.Clamp01(value01));
+
+            if (_exposure != null)
             {
-                return;
+                _exposure.mode.overrideState = true;
+                _exposure.mode.Override(ExposureMode.Fixed);
+                _exposure.fixedExposure.overrideState = true;
+                _exposure.fixedExposure.Override(fixedExposure);
             }
 
-            float postExposure = Mathf.Lerp(minPostExposure, maxPostExposure, Mathf.Clamp01(value01));
-            _colorAdjustments.postExposure.Override(postExposure);
+            GlobalSettingsApplier.ApplyNow();
         }
 
         private void OnMusicChanged(float value01)
@@ -128,6 +131,7 @@ namespace GrimoireOfTheVoid.UI
             PlayerPrefs.Save();
 
             MusicManager.Instance?.SetVolume(v);
+            GlobalSettingsApplier.ApplyNow();
         }
 
         private void OnSfxChanged(float value01)
@@ -137,6 +141,7 @@ namespace GrimoireOfTheVoid.UI
             PlayerPrefs.Save();
 
             AudioSettingsRuntime.SetSfxVolume01(v);
+            GlobalSettingsApplier.ApplyNow();
         }
 
         private void OnSensitivityChanged(float value01)
@@ -153,6 +158,8 @@ namespace GrimoireOfTheVoid.UI
             {
                 m.SetMouseSensitivity(sensitivity);
             }
+
+            GlobalSettingsApplier.ApplyNow();
         }
 
         private void EnsureVolumeOverrideReferences()
@@ -169,13 +176,15 @@ namespace GrimoireOfTheVoid.UI
                 return;
             }
 
-            if (!profile.TryGet(out _colorAdjustments) || _colorAdjustments == null)
+            if (!profile.TryGet(out _exposure) || _exposure == null)
             {
-                _colorAdjustments = profile.Add<ColorAdjustments>();
+                _exposure = profile.Add<Exposure>();
             }
 
-            _colorAdjustments.active = true;
-            _colorAdjustments.postExposure.overrideState = true;
+            _exposure.active = true;
+            _exposure.mode.overrideState = true;
+            _exposure.mode.Override(ExposureMode.Fixed);
+            _exposure.fixedExposure.overrideState = true;
         }
     }
 }
