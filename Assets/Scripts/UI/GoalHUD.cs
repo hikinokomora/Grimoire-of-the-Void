@@ -22,7 +22,13 @@ namespace GrimoireOfTheVoid.UI
 
         [Header("Timer")]
         [SerializeField] private TextMeshProUGUI timerText;
+        [Tooltip("Опциональная Image-рамка таймера (поверх/вокруг заливки).")]
+        [SerializeField] private Image timerFrame;
         [SerializeField] private Image timerFill;
+        [Tooltip("Спрайт рамки таймера (Type=Sliced). Назначь PNG как Sprite (2D and UI) и настрой Borders в Sprite Editor.")]
+        [SerializeField] private Sprite timerFrameSprite;
+        [Tooltip("Спрайт заливки таймера (Type=Filled Horizontal).")]
+        [SerializeField] private Sprite timerFillSprite;
         [SerializeField] [Min(0f)] private float criticalSeconds = 10f;
         [SerializeField] private Color normalTimerColor = Color.white;
         [SerializeField] private Color criticalTimerColor = new Color(1f, 0.35f, 0.35f);
@@ -51,18 +57,33 @@ namespace GrimoireOfTheVoid.UI
         private Vector2 _timerFillAnchorMax;
         private Vector2 _timerFillOffsetMin;
         private Vector2 _timerFillOffsetMax;
+        private RectTransform _timerFillMaskRect;
+        private bool _timerFillMaskReady;
+        private float _timerFillMaskBaseWidth;
+        private Vector2 _timerFillMaskBaseOffsetMin;
+        private Vector2 _timerFillMaskBaseOffsetMax;
         private BasicMovement[] _cachedMovements;
 
         private void OnEnable()
         {
             SubscribeDirectorEvents();
 
+            ApplyTimerBarSpritesAndTypes();
+
             if (timerFill != null && forceTimerFillImageToFilled)
             {
-                // If Image type is Simple, fillAmount won't visually change.
-                timerFill.type = Image.Type.Filled;
-                timerFill.fillMethod = Image.FillMethod.Horizontal;
-                timerFill.fillOrigin = (int)Image.OriginHorizontal.Left;
+                // If we drive by rect/mask cropping, we must NOT use Image.Filled (it would visually shrink/squash).
+                // In that mode we keep fillAmount at 1 and crop via RectMask2D.
+                if (driveTimerBarByRectTransform)
+                {
+                    timerFill.type = Image.Type.Simple;
+                }
+                else
+                {
+                    timerFill.type = Image.Type.Filled;
+                    timerFill.fillMethod = Image.FillMethod.Horizontal;
+                    timerFill.fillOrigin = (int)Image.OriginHorizontal.Left;
+                }
             }
             CacheTimerFillRectDefaults();
 
@@ -90,6 +111,23 @@ namespace GrimoireOfTheVoid.UI
             }
 
             CacheMovementIfNeeded();
+        }
+
+        private void ApplyTimerBarSpritesAndTypes()
+        {
+            if (timerFrame != null && timerFrameSprite != null)
+            {
+                timerFrame.sprite = timerFrameSprite;
+                timerFrame.type = Image.Type.Sliced;
+            }
+
+            if (timerFill != null && timerFillSprite != null)
+            {
+                timerFill.sprite = timerFillSprite;
+                timerFill.type = Image.Type.Filled;
+                timerFill.fillMethod = Image.FillMethod.Horizontal;
+                timerFill.fillOrigin = (int)Image.OriginHorizontal.Left;
+            }
         }
 
         private void OnDisable()
@@ -181,7 +219,8 @@ namespace GrimoireOfTheVoid.UI
             if (timerFill != null && max > 0f)
             {
                 float t = Mathf.Clamp01(remaining / max);
-                timerFill.fillAmount = t;
+                // If we crop via mask, keep the image itself full-size (no Filled shrink).
+                timerFill.fillAmount = driveTimerBarByRectTransform ? 1f : t;
 
                 if (driveTimerBarByRectTransform)
                 {
@@ -194,20 +233,27 @@ namespace GrimoireOfTheVoid.UI
                     if (t >= 0.5f)
                     {
                         float u = Mathf.InverseLerp(0.5f, 1f, t);
-                        timerFill.color = Color.Lerp(barMidColor, barFullColor, u);
+                        timerFill.color = ForceAlpha1(Color.Lerp(barMidColor, barFullColor, u));
                     }
                     else
                     {
                         float u = Mathf.InverseLerp(0f, 0.5f, t);
-                        timerFill.color = Color.Lerp(barLowColor, barMidColor, u);
+                        timerFill.color = ForceAlpha1(Color.Lerp(barLowColor, barMidColor, u));
                     }
                 }
             }
         }
 
+        private static Color ForceAlpha1(Color c)
+        {
+            c.a = 1f;
+            return c;
+        }
+
         private void CacheTimerFillRectDefaults()
         {
             if (timerFill == null) return;
+            EnsureTimerFillMask();
             RectTransform rt = timerFill.rectTransform;
             _timerFillAnchorMin = rt.anchorMin;
             _timerFillAnchorMax = rt.anchorMax;
@@ -218,24 +264,81 @@ namespace GrimoireOfTheVoid.UI
         private void ApplyTimerFillByRect(float t)
         {
             if (timerFill == null) return;
-            RectTransform rt = timerFill.rectTransform;
+            EnsureTimerFillMask();
 
-            // Assume the bar is laid out as a stretched rect inside a container (common for BG/Fill).
-            // We shrink it by moving anchorMax.x towards anchorMin.x.
-            Vector2 aMin = _timerFillAnchorMin;
-            Vector2 aMax = _timerFillAnchorMax;
-            float startX = aMin.x;
-            float endX = aMax.x;
-            if (endX < startX)
+            // We want the fill to be CROPPED, not squashed.
+            // So we keep the fill rect at full width and instead shrink a RectMask2D wrapper.
+            if (_timerFillMaskRect == null) return;
+
+            // Keep the mask anchored exactly as authored (no anchor changes),
+            // and crop by moving ONLY the right inset. The fill itself keeps full width and gets clipped.
+            float clamped = Mathf.Clamp01(t);
+            float newWidth = _timerFillMaskBaseWidth * clamped;
+            float delta = _timerFillMaskBaseWidth - newWidth; // how much to hide from the right
+
+            _timerFillMaskRect.offsetMin = _timerFillMaskBaseOffsetMin;
+            _timerFillMaskRect.offsetMax = new Vector2(_timerFillMaskBaseOffsetMax.x - delta, _timerFillMaskBaseOffsetMax.y);
+        }
+
+        private void EnsureTimerFillMask()
+        {
+            if (_timerFillMaskReady)
             {
-                (startX, endX) = (endX, startX);
+                return;
+            }
+            _timerFillMaskReady = true;
+
+            if (timerFill == null)
+            {
+                return;
             }
 
-            float x = Mathf.Lerp(startX, endX, t);
-            rt.anchorMin = new Vector2(aMin.x, aMin.y);
-            rt.anchorMax = new Vector2(x, aMax.y);
-            rt.offsetMin = _timerFillOffsetMin;
-            rt.offsetMax = _timerFillOffsetMax;
+            RectTransform fillRt = timerFill.rectTransform;
+            Transform originalParent = fillRt.parent;
+            if (originalParent == null)
+            {
+                return;
+            }
+
+            // Create wrapper with RectMask2D at the fill's position.
+            var maskGo = new GameObject(fillRt.gameObject.name + "_Mask", typeof(RectTransform), typeof(RectMask2D));
+            var maskRt = (RectTransform)maskGo.transform;
+            maskRt.SetParent(originalParent, false);
+            maskRt.SetSiblingIndex(fillRt.GetSiblingIndex());
+
+            // Copy layout from the fill to the mask.
+            maskRt.anchorMin = fillRt.anchorMin;
+            maskRt.anchorMax = fillRt.anchorMax;
+            maskRt.pivot = fillRt.pivot;
+            maskRt.anchoredPosition = fillRt.anchoredPosition;
+            maskRt.sizeDelta = fillRt.sizeDelta;
+            maskRt.localRotation = fillRt.localRotation;
+            maskRt.localScale = fillRt.localScale;
+            maskRt.offsetMin = fillRt.offsetMin;
+            maskRt.offsetMax = fillRt.offsetMax;
+
+            // Make sure layout is up-to-date before measuring rects.
+            Canvas.ForceUpdateCanvases();
+
+            _timerFillMaskBaseOffsetMin = maskRt.offsetMin;
+            _timerFillMaskBaseOffsetMax = maskRt.offsetMax;
+            // Prefer the authored fill width if available; rect.width can be 0 before first layout pass in some setups.
+            float w = maskRt.rect.width;
+            w = Mathf.Max(w, fillRt.rect.width);
+            w = Mathf.Max(w, fillRt.sizeDelta.x);
+            _timerFillMaskBaseWidth = Mathf.Max(1f, w);
+
+            // Reparent fill under the mask and stretch it to full size.
+            fillRt.SetParent(maskRt, false);
+            // IMPORTANT: keep the fill at FULL WIDTH so it gets clipped by the mask (cropping),
+            // not resized to match the mask (squeezing).
+            fillRt.anchorMin = new Vector2(0f, 0f);
+            fillRt.anchorMax = new Vector2(0f, 1f); // fixed width, stretched height
+            fillRt.pivot = new Vector2(0f, 0.5f);   // lock to left edge
+            fillRt.anchoredPosition = new Vector2(0f, 0f);
+            fillRt.sizeDelta = new Vector2(_timerFillMaskBaseWidth, 0f);
+
+            _timerFillMaskRect = maskRt;
         }
 
         private static string FormatTime(float seconds)
