@@ -17,6 +17,8 @@ namespace GrimoireOfTheVoid.Crafting
         [SerializeField] private BasicMovement movement;
         [Tooltip("Сценовый объект с CraftingInteractor; выключен в инспекторе, пока не активен режим стола.")]
         [SerializeField] private CraftingInteractor craftingInteractor;
+        [Tooltip("UI-объект прицела (crosshair) на HUD. Будет скрыт при входе в режим стола и показан при выходе.")]
+        [SerializeField] private GameObject crosshairRoot;
 
         [Header("Camera transition")]
         [SerializeField] [Min(0.01f)] private float enterTransitionDuration = 0.45f;
@@ -96,6 +98,11 @@ namespace GrimoireOfTheVoid.Crafting
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
 
+            if (crosshairRoot != null)
+            {
+                crosshairRoot.SetActive(false);
+            }
+
             _transitionRoutine = StartCoroutine(EnterCameraTransition(viewAnchor, cameraPivot));
         }
 
@@ -134,6 +141,10 @@ namespace GrimoireOfTheVoid.Crafting
                 _isExiting = false;
                 movement?.ExitStationView();
                 ApplyLockedCursor();
+                if (crosshairRoot != null)
+                {
+                    crosshairRoot.SetActive(true);
+                }
                 return;
             }
 
@@ -255,6 +266,11 @@ namespace GrimoireOfTheVoid.Crafting
             _transitionRoutine = null;
 
             ApplyLockedCursor();
+
+            if (crosshairRoot != null)
+            {
+                crosshairRoot.SetActive(true);
+            }
         }
 
         private void ApplyLockedCursor()

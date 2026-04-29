@@ -21,7 +21,7 @@ MonoBehaviour:
     m_Value: {fileID: 0}
   intensity:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 0.02
   m_MaxSamples:
     m_OverrideState: 1
     m_Value: 24
@@ -40,6 +40,12 @@ MonoBehaviour:
   components:
   - {fileID: -4243973477654201402}
   - {fileID: 7415173166030882832}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!114 &7415173166030882832
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -55,10 +61,10 @@ MonoBehaviour:
   active: 1
   postExposure:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 0.05
   contrast:
-    m_OverrideState: 0
-    m_Value: 0
+    m_OverrideState: 1
+    m_Value: 8
   colorFilter:
     m_OverrideState: 0
     m_Value: {r: 0.8584906, g: 1, b: 0.9976704, a: 1}
@@ -67,4 +73,4 @@ MonoBehaviour:
     m_Value: 0
   saturation:
     m_OverrideState: 1
-    m_Value: -100
+    m_Value: -12

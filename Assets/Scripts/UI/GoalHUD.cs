@@ -297,6 +297,31 @@ namespace GrimoireOfTheVoid.UI
         private void RestartScene()
         {
             Time.timeScale = 1f;
+
+            // BasicMovement is DontDestroyOnLoad in this project. During end screens we disable it,
+            // so a scene reload would keep the disabled instance alive and the "restart" would be partial.
+            // Destroying it forces a clean re-spawn from the scene.
+            var movements = UnityEngine.Object.FindObjectsByType<BasicMovement>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < movements.Length; i++)
+            {
+                BasicMovement m = movements[i];
+                if (m == null) continue;
+                if (m.gameObject.scene.name == "DontDestroyOnLoad" || m.gameObject.scene.buildIndex < 0)
+                {
+                    Destroy(m.gameObject);
+                }
+                else
+                {
+                    // In case it isn't persistent in some scenes, still reset to a playable state.
+                    m.canMove = true;
+                    m.ExitStationView();
+                    m.enabled = true;
+                }
+            }
+
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+
             Scene active = SceneManager.GetActiveScene();
             SceneManager.LoadScene(active.buildIndex);
         }
