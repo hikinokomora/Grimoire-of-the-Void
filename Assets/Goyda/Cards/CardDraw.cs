@@ -13,6 +13,8 @@ public class CardDraw : MonoBehaviour, IInteractable
     [SerializeField]
     private GameObject prefab;
     [SerializeField]
+    private GameObject light;
+    [SerializeField]
     private Transform spawnLocation;
     private int index;
     private string text = "";
@@ -28,7 +30,7 @@ public class CardDraw : MonoBehaviour, IInteractable
     [SerializeField] private GameObject GayDirect;
     [SerializeField] private GameObject Var1;
     [SerializeField] private GameObject Var2;
-    private bool isVar1=false;
+    private bool isVar1 = false;
 
     public void Interact()
     {
@@ -43,11 +45,11 @@ public class CardDraw : MonoBehaviour, IInteractable
         Material[] mats = rend.materials;
         mats[0] = matPrefab[index];
         rend.materials = mats;
-
-        Invoke(nameof(ResetCooldown), 60f);
-        Invoke(nameof(Apply), 5f);
+        light.SetActive(false);
+        Invoke(nameof(ResetCooldown), 5f);
+        Invoke(nameof(Apply), 4f);
     }
-    private void ResetCooldown() => isOnCooldown = false;
+    private void ResetCooldown() { isOnCooldown = false; light.SetActive(true); }
 
     private void Apply()
     {
@@ -170,6 +172,7 @@ public class CardDraw : MonoBehaviour, IInteractable
                 text = "XXI Аркан: Мир"; break;
         }
         OnCardInfo?.Invoke(title, desc);
+        
     }
 
     private void RemoveTentackles() { tentacles.SetActive(false); }

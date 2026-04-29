@@ -161,9 +161,24 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 575a993cce1cc4d478d468654bd02695, type: 2}
   - {fileID: 2100000, guid: 1fa05e773e8ad334385e08f6655f5700, type: 2}
   prefab: {fileID: 481120517747037138, guid: ef16ee8884c4a3949b845d371ba2f858, type: 3}
+  light: {fileID: 0}
   spawnLocation: {fileID: 2962024014378314480}
-  babe: []
+  babe:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   tentacles: {fileID: 0}
+  GayDirect: {fileID: 0}
+  Var1: {fileID: 0}
+  Var2: {fileID: 0}
 --- !u!65 &304423985394475261
 BoxCollider:
   m_ObjectHideFlags: 0
