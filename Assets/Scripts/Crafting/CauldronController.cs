@@ -38,6 +38,13 @@ namespace GrimoireOfTheVoid.Crafting
         [Tooltip("Доп. партиклы «вылет из котла» при дёргании рычага (сброс); проигрываются вместе с дымом, даже если котёл пуст.")]
         [SerializeField] private ParticleSystem[] clearBurstEffects;
 
+        [Header("Эффекты (успешный крафт)")]
+        [Tooltip("Эффект, который проигрывается при успешном крафте.")]
+        [SerializeField] private ParticleSystem craftSuccessEffect;
+
+        [Tooltip("Дополнительные эффекты, которые также проигрываются при успешном крафте.")]
+        [SerializeField] private ParticleSystem[] craftSuccessExtraEffects;
+
         [Tooltip("Опциональная точка спавна VFX (если пусто — используем Spawn Point или позицию котла).")]
         [SerializeField] private Transform vfxAnchor;
 
@@ -56,6 +63,19 @@ namespace GrimoireOfTheVoid.Crafting
         [SerializeField] [Min(0.01f)] private float minIngredientDropPitch = 0.95f;
         [SerializeField] [Min(0.01f)] private float maxIngredientDropPitch = 1.05f;
 
+        [Header("Audio (Loop)")]
+        [Tooltip("Постоянный звук бурления котла (loop). Если AudioSource не задан — будет взят с объекта котла или создан новый.")]
+        [SerializeField] private AudioSource bubblingAudioSource;
+        [SerializeField] private AudioClip bubblingLoopClip;
+        [SerializeField] [Range(0f, 1f)] private float bubblingLoopVolume = 0.25f;
+        [SerializeField] private bool randomizeBubblingLoopPitch = false;
+        [SerializeField] [Min(0.01f)] private float minBubblingLoopPitch = 0.98f;
+        [SerializeField] [Min(0.01f)] private float maxBubblingLoopPitch = 1.02f;
+
+        [Header("Debug")]
+        [Tooltip("Если включено — в книге/рецептах будут раскрыты все аспекты на время включения (только для отладки).")]
+        [SerializeField] private bool debugRevealAllRecipes = false;
+
         // TODO: Переменные для расширения под таймер
         // [SerializeField] private float defaultCraftTime = 2f;
         // private float currentCraftTimer = 0f;
@@ -71,6 +91,60 @@ namespace GrimoireOfTheVoid.Crafting
             if (ingredientAudioSource == null)
             {
                 ingredientAudioSource = GetComponent<AudioSource>();
+            }
+
+            EnsureBubblingLoopAudio();
+            OccultAspectRegistry.SetRevealAllAndNotifyUI(debugRevealAllRecipes);
+        }
+
+        private void OnDisable()
+        {
+            if (bubblingAudioSource != null)
+            {
+                bubblingAudioSource.Stop();
+            }
+        }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (!Application.isPlaying) return;
+            OccultAspectRegistry.SetRevealAllAndNotifyUI(debugRevealAllRecipes);
+        }
+#endif
+
+        private void EnsureBubblingLoopAudio()
+        {
+            if (bubblingAudioSource == null)
+            {
+                bubblingAudioSource = GetComponent<AudioSource>();
+                if (bubblingAudioSource == null)
+                {
+                    bubblingAudioSource = gameObject.AddComponent<AudioSource>();
+                }
+            }
+
+            if (bubblingAudioSource == null) return;
+
+            bubblingAudioSource.clip = bubblingLoopClip;
+            bubblingAudioSource.loop = true;
+            bubblingAudioSource.playOnAwake = false;
+            bubblingAudioSource.volume = Mathf.Clamp01(bubblingLoopVolume);
+
+            if (randomizeBubblingLoopPitch)
+            {
+                float a = Mathf.Min(minBubblingLoopPitch, maxBubblingLoopPitch);
+                float b = Mathf.Max(minBubblingLoopPitch, maxBubblingLoopPitch);
+                bubblingAudioSource.pitch = UnityEngine.Random.Range(a, b);
+            }
+            else
+            {
+                bubblingAudioSource.pitch = 1f;
+            }
+
+            if (bubblingLoopClip != null && !bubblingAudioSource.isPlaying)
+            {
+                bubblingAudioSource.Play();
             }
         }
 
@@ -209,6 +283,7 @@ namespace GrimoireOfTheVoid.Crafting
                 if (recipe.Matches(aspectDatas))
                 {
                     Debug.Log($"[Cauldron] ✓ УСПЕХ! Найден рецепт. Крафтим: {recipe.output.DisplayName}!");
+                    PlayCraftSuccessVisualEffects();
                     SpawnResult(recipe.output);
                     
                     // Разблокировка в реестре и обновление книг (без обязательного AspectManager)
@@ -405,6 +480,17 @@ namespace GrimoireOfTheVoid.Crafting
             for (int i = 0; i < clearBurstEffects.Length; i++)
             {
                 PlayOneShotParticles(GetVfxInstance(clearBurstEffects[i]));
+            }
+        }
+
+        private void PlayCraftSuccessVisualEffects()
+        {
+            PlayOneShotParticles(GetVfxInstance(craftSuccessEffect));
+
+            if (craftSuccessExtraEffects == null) return;
+            for (int i = 0; i < craftSuccessExtraEffects.Length; i++)
+            {
+                PlayOneShotParticles(GetVfxInstance(craftSuccessExtraEffects[i]));
             }
         }
 

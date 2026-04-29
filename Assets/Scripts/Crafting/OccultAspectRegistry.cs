@@ -29,6 +29,7 @@ namespace GrimoireOfTheVoid.Crafting
         private static HashSet<string> _revealAllPrevRevealed;
         private static HashSet<string> _revealAllPrevImages;
         private static Dictionary<string, bool> _revealAllPrevSessionUnlocked;
+        private static bool _revealAllActive;
 
         private static Runner EnsureRunner()
         {
@@ -192,6 +193,7 @@ namespace GrimoireOfTheVoid.Crafting
                 r.StopCoroutine(_revealAllRoutine);
                 RestoreRevealAllSnapshot();
             }
+            _revealAllActive = true;
 
             _revealAllPrevRevealed = new HashSet<string>(_sessionRevealedIds, StringComparer.Ordinal);
             _revealAllPrevImages = new HashSet<string>(_sessionImageRevealedIds, StringComparer.Ordinal);
@@ -216,8 +218,55 @@ namespace GrimoireOfTheVoid.Crafting
         {
             if (seconds > 0f) yield return new WaitForSeconds(seconds);
             RestoreRevealAllSnapshot();
+            _revealAllActive = false;
             NotifyBooks(null);
             _revealAllRoutine = null;
+        }
+
+        /// <summary>
+        /// Debug/cheat: показать все рецепты (и иллюстрации) во всех книгах до отключения.
+        /// Возвращает предыдущие состояния при выключении.
+        /// </summary>
+        public static void SetRevealAllAndNotifyUI(bool enabled)
+        {
+            EnsureDefaultFromResources();
+            if (!_initialized) return;
+
+            if (enabled)
+            {
+                if (_revealAllActive) return;
+
+                if (_revealAllRoutine != null)
+                {
+                    Runner r = EnsureRunner();
+                    r.StopCoroutine(_revealAllRoutine);
+                    _revealAllRoutine = null;
+                }
+
+                _revealAllPrevRevealed = new HashSet<string>(_sessionRevealedIds, StringComparer.Ordinal);
+                _revealAllPrevImages = new HashSet<string>(_sessionImageRevealedIds, StringComparer.Ordinal);
+                _revealAllPrevSessionUnlocked = new Dictionary<string, bool>(StringComparer.Ordinal);
+
+                for (int i = 0; i < _ordered.Count; i++)
+                {
+                    OccultAspect a = _ordered[i];
+                    if (a == null || string.IsNullOrEmpty(a.ID)) continue;
+                    OccultAspect c = GetCanonical(a) ?? a;
+                    if (c != null) _revealAllPrevSessionUnlocked[c.ID] = c.sessionUnlocked;
+                    _sessionRevealedIds.Add(a.ID);
+                    _sessionImageRevealedIds.Add(a.ID);
+                    if (c != null) c.sessionUnlocked = true;
+                }
+
+                _revealAllActive = true;
+                NotifyBooks(null);
+                return;
+            }
+
+            if (!_revealAllActive) return;
+            RestoreRevealAllSnapshot();
+            _revealAllActive = false;
+            NotifyBooks(null);
         }
 
         private static void RestoreRevealAllSnapshot()
