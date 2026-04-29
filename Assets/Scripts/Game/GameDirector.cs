@@ -60,6 +60,8 @@ namespace GrimoireOfTheVoid.Game
         public event Action OnVictory;
         private bool _victoryTriggered;
         private int _forceNextGoalTier = -1;
+        /// <summary>Следующая цель: предпочесть этот тир (ниже обычного); если пул пуст — взять на тир выше.</summary>
+        private int _forceNextGoalTierLowerOnce = -1;
         private bool _extraLifeOnTimeout;
         private bool _worldDrawn;
         private bool _ignoreWrongDeliveryOnce;
@@ -81,8 +83,17 @@ namespace GrimoireOfTheVoid.Game
 
         public void ForceNextGoalTierBumpOnce()
         {
+            _forceNextGoalTierLowerOnce = -1;
             int cur = CurrentTier > 0 ? CurrentTier : 1;
             _forceNextGoalTier = Mathf.Min(cur + 1, maxTier);
+        }
+
+        /// <summary>Следующая выбранная цель будет на тир ниже текущей (минимум 1). Перебивает отложенный «+1» от Дьявола.</summary>
+        public void ForceNextGoalTierLowerOnce()
+        {
+            _forceNextGoalTier = -1;
+            int cur = CurrentTier > 0 ? CurrentTier : 1;
+            _forceNextGoalTierLowerOnce = Mathf.Max(cur - 1, 1);
         }
 
         private void Awake()
@@ -146,6 +157,8 @@ namespace GrimoireOfTheVoid.Game
             _extraLifeOnTimeout = false;
             _worldDrawn = false;
             _ignoreWrongDeliveryOnce = false;
+            _forceNextGoalTier = -1;
+            _forceNextGoalTierLowerOnce = -1;
 
             BuildPoolsFromRegistry();
 
@@ -354,6 +367,13 @@ namespace GrimoireOfTheVoid.Game
                 _forceNextGoalTier = -1;
                 if (HasAny(desired)) t = desired;
                 else if (desired > 1 && HasAny(desired - 1)) t = desired - 1;
+            }
+            else if (_forceNextGoalTierLowerOnce >= 1)
+            {
+                int desired = Mathf.Clamp(_forceNextGoalTierLowerOnce, 1, maxTier);
+                _forceNextGoalTierLowerOnce = -1;
+                if (HasAny(desired)) t = desired;
+                else if (desired < maxTier && HasAny(desired + 1)) t = desired + 1;
             }
             if (UnityEngine.Random.value < promoteChance && t < maxTier && HasAny(t + 1))
             {

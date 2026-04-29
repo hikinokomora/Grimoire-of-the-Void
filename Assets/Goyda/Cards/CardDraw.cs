@@ -21,6 +21,8 @@ public class CardDraw : MonoBehaviour, IInteractable
     private bool isFart = false;
     private float _prevWalkSpeed;
     private bool _hasPrevWalkSpeed;
+    private float _prevTimeRateMultiplier = 1f;
+    private bool _hasPrevTimeRateMultiplier;
 
     private bool isOnCooldown = false;
 
@@ -63,6 +65,15 @@ public class CardDraw : MonoBehaviour, IInteractable
                 text = "0 Аркан: Шут"; break;
             case 1: 
                 title = "Маг";
+                desc = "Раскрывает рецепт случайного аспекта";
+                OccultAspectRegistry.EnsureDefaultFromResources();
+                var recipeList = OccultAspectRegistry.CloneOrderedList();
+                for (int i = recipeList.Count - 1; i >= 0; i--)
+                {
+                    var a = recipeList[i];
+                    if (a == null || OccultAspectRegistry.IsRevealedForPage(a)) recipeList.RemoveAt(i);
+                }
+                if (recipeList.Count > 0) OccultAspectRegistry.RevealRecipeAndNotifyUI(recipeList[UnityEngine.Random.Range(0, recipeList.Count)], false);
                 text = "I Аркан: Маг"; break;
             case 2: 
                 title = "Папесса";
@@ -104,6 +115,8 @@ public class CardDraw : MonoBehaviour, IInteractable
                 text = "VII Аркан: Колесница"; break;
             case 8: 
                 title = "Сила";
+                desc = "Время течёт медленнее";
+                ApplyTimeRateMultiplier(0.6f, 90f);
                 text = "VIII Аркан: Сила"; break;
             case 9: 
                 title = "Отшельник";
@@ -151,6 +164,7 @@ public class CardDraw : MonoBehaviour, IInteractable
             case 17: 
                 title = "Звезда";
                 desc = "Тир запроса -1";
+                GayDirect.GetComponent<GameDirector>().ForceNextGoalTierLowerOnce();
                 text = "XVII Аркан: Звезда"; break;
             case 18: 
                 title = "Луна";
@@ -200,6 +214,28 @@ public class CardDraw : MonoBehaviour, IInteractable
         if (m == null) return;
         if (_hasPrevWalkSpeed) m.walkSpeed = _prevWalkSpeed;
         _hasPrevWalkSpeed = false;
+    }
+
+    private void ApplyTimeRateMultiplier(float mult, float seconds)
+    {
+        var director = GayDirect != null ? GayDirect.GetComponent<GameDirector>() : GameDirector.Instance;
+        if (director == null) return;
+        if (!_hasPrevTimeRateMultiplier)
+        {
+            _prevTimeRateMultiplier = director.TimeRateMultiplier;
+            _hasPrevTimeRateMultiplier = true;
+        }
+        CancelInvoke(nameof(TimeRateBack));
+        director.TimeRateMultiplier = _prevTimeRateMultiplier * mult;
+        if (seconds > 0f) Invoke(nameof(TimeRateBack), seconds);
+    }
+
+    private void TimeRateBack()
+    {
+        var director = GayDirect != null ? GayDirect.GetComponent<GameDirector>() : GameDirector.Instance;
+        if (director == null) return;
+        if (_hasPrevTimeRateMultiplier) director.TimeRateMultiplier = _prevTimeRateMultiplier;
+        _hasPrevTimeRateMultiplier = false;
     }
     private void UnFart() { isFart = false; }
 }

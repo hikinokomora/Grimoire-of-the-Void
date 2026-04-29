@@ -165,6 +165,23 @@ namespace GrimoireOfTheVoid.Crafting
             NotifyBooks(goToPageForAspect ? aspect : null);
         }
 
+        /// <summary>Постоянно раскрывает только рецепт (текст) для одного аспекта и обновляет книги.</summary>
+        public static void RevealRecipeAndNotifyUI(OccultAspect aspect, bool goToPageForAspect = true)
+        {
+            if (aspect == null) return;
+            EnsureDefaultFromResources();
+            if (!_initialized) return;
+            if (!string.IsNullOrEmpty(aspect.ID) && !_byId.ContainsKey(aspect.ID)) RegisterAdHocIfMissing(aspect);
+            OccultAspect c = GetCanonical(aspect) ?? aspect;
+            if (c == null) return;
+            c.sessionUnlocked = true;
+            if (!string.IsNullOrEmpty(c.ID))
+            {
+                _sessionRevealedIds.Add(c.ID);
+            }
+            NotifyBooks(goToPageForAspect ? c : null);
+        }
+
         public static void RevealAllForSecondsAndNotifyUI(float seconds)
         {
             EnsureDefaultFromResources();
