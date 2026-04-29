@@ -109185,7 +109185,7 @@ MonoBehaviour:
   victoryAfterFirstCraft: 0
   autoCompleteGoalOnCraft: 0
   baseTimePerTier:
-  - 1000
+  - 60
   - 90
   - 120
   - 180
