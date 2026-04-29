@@ -14,6 +14,9 @@ namespace GrimoireOfTheVoid.Game
         [Tooltip("Уничтожать объект аспекта после успешной доставки.")]
         [SerializeField] private bool consumeOnAccept = true;
 
+        [Tooltip("Уничтожать объект при неверной сдаче (штраф по-прежнему из GameDirector).")]
+        [SerializeField] private bool consumeOnWrongAspect = true;
+
         [Header("Optional VFX")]
         [SerializeField] private ParticleSystem acceptVfx;
         [SerializeField] private ParticleSystem rejectVfx;
@@ -84,7 +87,7 @@ namespace GrimoireOfTheVoid.Game
                 return;
             }
 
-            bool ok = GameDirector.Instance.NotifyAspectDelivered(aspect.aspectData);
+            bool ok = GameDirector.Instance.NotifyAspectDelivered(aspect.aspectData, out bool wasWrongAspect);
             if (ok)
             {
                 if (acceptVfx != null)
@@ -102,6 +105,11 @@ namespace GrimoireOfTheVoid.Game
                 if (rejectVfx != null)
                 {
                     rejectVfx.Play();
+                }
+
+                if (consumeOnWrongAspect && wasWrongAspect && !aspect.isInfiniteSource)
+                {
+                    Destroy(aspect.gameObject);
                 }
             }
         }

@@ -201,8 +201,12 @@ namespace GrimoireOfTheVoid.Game
         /// <summary>
         /// Вызывается из зоны доставки: игрок положил скрафченный аспект в триггер.
         /// </summary>
-        public bool NotifyAspectDelivered(OccultAspect aspect)
+        /// <param name="wasWrongAspect">
+        /// true, если цель была задана, но сдан не тот аспект (в т.ч. при одноразовом игноре штрафа).
+        /// </param>
+        public bool NotifyAspectDelivered(OccultAspect aspect, out bool wasWrongAspect)
         {
+            wasWrongAspect = false;
             if (!IsRunning || CurrentTarget == null || aspect == null)
             {
                 return false;
@@ -210,6 +214,7 @@ namespace GrimoireOfTheVoid.Game
 
             if (!IdsMatch(aspect, CurrentTarget))
             {
+                wasWrongAspect = true;
                 if (_ignoreWrongDeliveryOnce)
                 {
                     _ignoreWrongDeliveryOnce = false;
