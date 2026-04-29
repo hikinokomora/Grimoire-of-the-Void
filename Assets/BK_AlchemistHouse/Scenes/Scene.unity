@@ -24333,6 +24333,14 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 27590063}
     - target: {fileID: 6547777333061645896, guid: 9061b1ed81f68204b9565a631171661c, type: 3}
+      propertyPath: volumeM
+      value: 
+      objectReference: {fileID: 810937503}
+    - target: {fileID: 6547777333061645896, guid: 9061b1ed81f68204b9565a631171661c, type: 3}
+      propertyPath: volumeS
+      value: 
+      objectReference: {fileID: 267059440}
+    - target: {fileID: 6547777333061645896, guid: 9061b1ed81f68204b9565a631171661c, type: 3}
       propertyPath: GayDirect
       value: 
       objectReference: {fileID: 1710785930}
@@ -68501,7 +68509,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.ProbeVolumePerSceneData
   serializedBakingSet: {fileID: 11400000, guid: 7fa729cdd57b9f64693c233a76b79576, type: 2}
-  sceneGUID: 0dde8e03695d1d0428fc4ade1ecb646a
+  sceneGUID: 5da85a091d150de41b5058a0980b6f8f
   obsoleteAsset: {fileID: 0}
   obsoleteCellSharedDataAsset: {fileID: 0}
   obsoleteCellSupportDataAsset: {fileID: 0}
