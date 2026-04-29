@@ -159,9 +159,6 @@ public class CardDraw : MonoBehaviour, IInteractable
                 GayDirect.GetComponent<GameDirector>().ForceNextGoalTierBumpOnce();
                 text = "XV Аркан: Дьявол"; break;
             case 16:
-                Var1.SetActive(isVar1);
-                isVar1 = !isVar1;
-                Var2.SetActive(isVar1);
                 //title = "Башня";
                 desc = "Что-то здесь изменилось";
                 text = "XVI Аркан: Башня"; break;

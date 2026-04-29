@@ -2,6 +2,8 @@
 using UnityEngine.Video;
 using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
+using System.Collections;
+using GrimoireOfTheVoid.Loading;
 
 public class IntroManager : MonoBehaviour
 {
@@ -17,7 +19,17 @@ public class IntroManager : MonoBehaviour
     [Header("Сцены")]
     public string nextSceneName = "Scene";
 
+    [Header("Loading overlay (optional)")]
+    [Tooltip("Optional overlay to hide 'empty' scene while async loading / warmup runs.")]
+    [SerializeField] private LoadingOverlay loadingOverlay;
+    [Tooltip("If enabled, temporarily increases async texture upload budget during intro for smoother HDD transitions.")]
+    [SerializeField] private bool boostAsyncUploadDuringIntro = true;
+    [SerializeField] [Min(1)] private int boostedAsyncUploadTimeSliceMs = 6;
+    [SerializeField] [Min(4)] private int boostedAsyncUploadBufferSizeMb = 32;
+
     private bool isSkipped = false;
+    private AsyncOperation _loadOp;
+    private bool _isTransitioning;
 
     private void Start()
     {
@@ -62,7 +74,31 @@ public class IntroManager : MonoBehaviour
         Debug.Log("▶️ Запуск видео...");
         videoPlayer.Play();
 
+        BeginAsyncPreload();
+
         videoPlayer.loopPointReached += OnVideoFinished;
+    }
+
+    private void BeginAsyncPreload()
+    {
+        if (_loadOp != null || string.IsNullOrWhiteSpace(nextSceneName))
+        {
+            return;
+        }
+
+        // Prioritize background loading during intro (helps HDD).
+        Application.backgroundLoadingPriority = ThreadPriority.High;
+        if (boostAsyncUploadDuringIntro)
+        {
+            QualitySettings.asyncUploadTimeSlice = boostedAsyncUploadTimeSliceMs;
+            QualitySettings.asyncUploadBufferSize = boostedAsyncUploadBufferSizeMb;
+        }
+
+        _loadOp = SceneManager.LoadSceneAsync(nextSceneName);
+        if (_loadOp != null)
+        {
+            _loadOp.allowSceneActivation = false;
+        }
     }
 
     private void Update()
@@ -82,7 +118,7 @@ public class IntroManager : MonoBehaviour
 
     private void OnVideoFinished(VideoPlayer vp)
     {
-        if (!isSkipped) LoadNextScene();
+        if (!isSkipped) StartSceneTransition();
     }
 
     public void SkipIntro()
@@ -94,8 +130,49 @@ public class IntroManager : MonoBehaviour
         videoPlayer.loopPointReached -= OnVideoFinished;
         videoPlayer.Stop();
 
-        LoadNextScene();
+        StartSceneTransition();
     }
 
-    private void LoadNextScene() => SceneManager.LoadScene(nextSceneName);
+    private void StartSceneTransition()
+    {
+        if (_isTransitioning)
+        {
+            return;
+        }
+        _isTransitioning = true;
+        StartCoroutine(CoFinishLoadAndActivate());
+    }
+
+    private IEnumerator CoFinishLoadAndActivate()
+    {
+        BeginAsyncPreload();
+
+        if (loadingOverlay != null)
+        {
+            loadingOverlay.Show();
+        }
+
+        // Wait for async load to reach activation-ready state.
+        if (_loadOp != null)
+        {
+            while (_loadOp.progress < 0.9f)
+            {
+                yield return null;
+            }
+            _loadOp.allowSceneActivation = true;
+        }
+        else
+        {
+            SceneManager.LoadScene(nextSceneName);
+            yield break;
+        }
+
+        // After activation we warm up and then hide overlay.
+        yield return SceneWarmup.WarmupAfterNextSceneLoad();
+
+        if (loadingOverlay != null)
+        {
+            loadingOverlay.Hide();
+        }
+    }
 }

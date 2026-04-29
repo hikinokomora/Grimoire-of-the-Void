@@ -20,6 +20,6 @@ MonoBehaviour:
     \u0434\u043B\u044F \u041F\u0443\u0441\u0442\u043E\u0442\u044B."
   aspectIcon: {fileID: 21300000, guid: 6d4e866b421a32a419523d172e34937a, type: 3}
   ingredientsText: "\u041A\u0440\u043E\u0432\u044C + \u041E\u0433\u043E\u043D\u044C
-    + \u0411\u0435\u0437\u0434\u043D\u0430 (3)"
+    + \u0411\u0435\u0437\u0434\u043D\u0430 "
   tier: 4
   isUnlocked: 0
