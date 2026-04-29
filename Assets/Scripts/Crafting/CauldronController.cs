@@ -47,6 +47,15 @@ namespace GrimoireOfTheVoid.Crafting
         [Tooltip("Локальный оффсет поворота VFX (в градусах) относительно якоря. Используй, если префаб изначально 'лежит' (например -90 по X).")]
         [SerializeField] private Vector3 vfxLocalEulerOffset = Vector3.zero;
 
+        [Header("Audio")]
+        [Tooltip("Звук попадания аспекта в котёл (проигрывается при AddIngredient).")]
+        [SerializeField] private AudioSource ingredientAudioSource;
+        [SerializeField] private AudioClip ingredientDropClip;
+        [SerializeField] [Range(0f, 1f)] private float ingredientDropVolume = 0.8f;
+        [SerializeField] private bool randomizeIngredientDropPitch = true;
+        [SerializeField] [Min(0.01f)] private float minIngredientDropPitch = 0.95f;
+        [SerializeField] [Min(0.01f)] private float maxIngredientDropPitch = 1.05f;
+
         // TODO: Переменные для расширения под таймер
         // [SerializeField] private float defaultCraftTime = 2f;
         // private float currentCraftTimer = 0f;
@@ -58,6 +67,11 @@ namespace GrimoireOfTheVoid.Crafting
         private void Awake()
         {
             BuildRuntimeRecipes();
+
+            if (ingredientAudioSource == null)
+            {
+                ingredientAudioSource = GetComponent<AudioSource>();
+            }
         }
 
         private void BuildRuntimeRecipes()
@@ -118,8 +132,31 @@ namespace GrimoireOfTheVoid.Crafting
                 Debug.Log($"[Cauldron] Добавлен ингредиент: {ingredientItem.aspectData.DisplayName}. Всего ингредиентов: {currentIngredients.Count}");
             }
 
+            PlayIngredientDropSound();
+
             // Запускаем проверку один раз после добавления предмета
             CheckAutoCraft();
+        }
+
+        private void PlayIngredientDropSound()
+        {
+            if (ingredientAudioSource == null || ingredientDropClip == null)
+            {
+                return;
+            }
+
+            if (randomizeIngredientDropPitch)
+            {
+                float a = Mathf.Min(minIngredientDropPitch, maxIngredientDropPitch);
+                float b = Mathf.Max(minIngredientDropPitch, maxIngredientDropPitch);
+                ingredientAudioSource.pitch = UnityEngine.Random.Range(a, b);
+            }
+            else
+            {
+                ingredientAudioSource.pitch = 1f;
+            }
+
+            ingredientAudioSource.PlayOneShot(ingredientDropClip, Mathf.Clamp01(ingredientDropVolume));
         }
 
         /// <summary>
