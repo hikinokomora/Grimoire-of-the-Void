@@ -188,7 +188,6 @@ namespace GrimoireOfTheVoid.Crafting
                 _dragged = Instantiate(aspect, aspect.transform.position, aspect.transform.rotation);
                 _dragged.isInfiniteSource = false;
                 _dragWasCloned = true;
-                _dragged.ApplySpawnGrace(0.15f);
             }
             else if (aspect.isInfiniteSource)
             {
