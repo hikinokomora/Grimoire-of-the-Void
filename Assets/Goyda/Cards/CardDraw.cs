@@ -52,17 +52,15 @@ public class CardDraw : MonoBehaviour, IInteractable
         mats[0] = matPrefab[index];
         rend.materials = mats;
         light.SetActive(false);
-        Invoke(nameof(ResetCooldown), 5f);
+        Invoke(nameof(ResetCooldown), 60f);
         Invoke(nameof(Apply), 3f);
     }
     private void ResetCooldown() { isOnCooldown = false; light.SetActive(true); }
-    private int count = 16;
     private void Apply()
     {
         //string title = "";
         string desc = "";
-        count++;
-        switch (count)
+        switch (index)
         {
             case 0:
                 //title = "Шут";
