@@ -110,6 +110,7 @@ namespace GrimoireOfTheVoid.UI
         private void OnBrightnessChanged(float value01)
         {
             PlayerPrefs.SetFloat(BrightnessKey, Mathf.Clamp01(value01));
+            PlayerPrefs.Save();
 
             if (_colorAdjustments == null)
             {
@@ -124,6 +125,7 @@ namespace GrimoireOfTheVoid.UI
         {
             float v = Mathf.Clamp01(value01);
             PlayerPrefs.SetFloat(MusicKey, v);
+            PlayerPrefs.Save();
 
             MusicManager.Instance?.SetVolume(v);
         }
@@ -132,6 +134,7 @@ namespace GrimoireOfTheVoid.UI
         {
             float v = Mathf.Clamp01(value01);
             PlayerPrefs.SetFloat(SfxKey, v);
+            PlayerPrefs.Save();
 
             AudioSettingsRuntime.SetSfxVolume01(v);
         }
@@ -140,6 +143,7 @@ namespace GrimoireOfTheVoid.UI
         {
             float v = Mathf.Clamp01(value01);
             PlayerPrefs.SetFloat(SensitivityKey, v);
+            PlayerPrefs.Save();
 
             float sensitivity = Mathf.Lerp(minMouseSensitivity, maxMouseSensitivity, v);
 
