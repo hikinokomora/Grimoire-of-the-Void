@@ -124,6 +124,13 @@ public class BasicMovement : MonoBehaviour
         ReleaseHeldObject();
     }
 
+    public void SetMouseSensitivity(float value)
+    {
+        mouseSensitivity = Mathf.Clamp(value, 0.001f, 10f);
+    }
+
+    public float GetMouseSensitivity() => mouseSensitivity;
+
     private void RegisterInputCallbacks()
     {
         input.Player.Move.performed += OnMovePerformed;

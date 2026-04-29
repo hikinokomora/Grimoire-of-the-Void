@@ -1,4 +1,5 @@
 using UnityEngine;
+using GrimoireOfTheVoid.Audio;
 
 [RequireComponent(typeof(AudioSource))]
 public class FootstepManager : MonoBehaviour
@@ -59,6 +60,7 @@ public class FootstepManager : MonoBehaviour
         int randomIndex = Random.Range(0, footstepClips.Length);
         // Лёгкая рандомизация тона для естественности
         audioSource.pitch = Random.Range(0.92f, 1.08f);
-        audioSource.PlayOneShot(footstepClips[randomIndex]);
+        float sfxScale = AudioSettingsRuntime.SfxVolume01;
+        audioSource.PlayOneShot(footstepClips[randomIndex], sfxScale);
     }
 }

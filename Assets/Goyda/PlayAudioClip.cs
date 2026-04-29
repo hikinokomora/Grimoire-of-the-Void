@@ -1,5 +1,6 @@
 using Unity.VisualScripting;
 using UnityEngine;
+using GrimoireOfTheVoid.Audio;
 
 public class PlayAudioClip : MonoBehaviour
 {
@@ -12,7 +13,8 @@ public class PlayAudioClip : MonoBehaviour
     public void PlayOnce()
     {
         if (cooldown) return;
-        audioSource.PlayOneShot(audioClip);
+        float sfxScale = AudioSettingsRuntime.SfxVolume01;
+        audioSource.PlayOneShot(audioClip, sfxScale);
         cooldown = true;
         audioSource.pitch = Random.Range(0.7f, 2.5f);
         Invoke(nameof(Wait), 1f);

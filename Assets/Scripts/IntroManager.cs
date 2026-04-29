@@ -1,9 +1,12 @@
 ﻿using UnityEngine;
 using UnityEngine.Video;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
 
 public class IntroManager : MonoBehaviour
 {
+    private const string NextSceneOverrideKey = "menu_nextSceneName";
+
     [Header("Video")]
     public VideoPlayer videoPlayer;
 
@@ -23,6 +26,13 @@ public class IntroManager : MonoBehaviour
         {
             Debug.LogError("❌ VideoPlayer не назначен!");
             return;
+        }
+
+        // Allow menu to override the target game scene.
+        string overrideName = PlayerPrefs.GetString(NextSceneOverrideKey, string.Empty);
+        if (!string.IsNullOrWhiteSpace(overrideName))
+        {
+            nextSceneName = overrideName;
         }
 
         // Настройка Audio Source
@@ -58,8 +68,12 @@ public class IntroManager : MonoBehaviour
     private void Update()
     {
         // Проверяем явные действия: клик, пробел, Enter, Esc
-        if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space) ||
-            Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Escape))
+        bool click = Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
+        bool space = Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
+        bool enter = Keyboard.current != null && Keyboard.current.enterKey.wasPressedThisFrame;
+        bool escape = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
+
+        if (click || space || enter || escape)
         {
             Debug.Log("⏭ Попытка пропуска инициирована!");
             SkipIntro();
