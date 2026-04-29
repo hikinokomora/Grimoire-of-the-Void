@@ -12,6 +12,14 @@ public class PhysicalRecipeBook : MonoBehaviour
     public GameObject pagePrefab;
     public float turnSpeed = 2f;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource pageTurnAudioSource;
+    [SerializeField] private AudioClip pageTurnClip;
+    [SerializeField] [Range(0f, 1f)] private float pageTurnVolume = 1f;
+    [SerializeField] private bool randomizePageTurnPitch = false;
+    [SerializeField] [Min(0.01f)] private float minPageTurnPitch = 0.9f;
+    [SerializeField] [Min(0.01f)] private float maxPageTurnPitch = 1.1f;
+
     [Header("Data (кэш, синхронизируется с OccultAspectRegistry)")]
     public List<OccultAspect> allAspects = new List<OccultAspect>();
     private List<OccultAspect> unlockedAspects = new List<OccultAspect>();
@@ -19,6 +27,14 @@ public class PhysicalRecipeBook : MonoBehaviour
     private List<GameObject> spawnedPages = new List<GameObject>();
     private int currentPageIndex = 0; // 0 means page 0 is front. Page index increments by 1 per leaf.
     private bool isTurning = false;
+
+    private void Reset()
+    {
+        if (pageTurnAudioSource == null)
+        {
+            pageTurnAudioSource = GetComponent<AudioSource>();
+        }
+    }
 
     private void Start()
     {
@@ -32,6 +48,27 @@ public class PhysicalRecipeBook : MonoBehaviour
         UpdateUnlockedAspects();
         GeneratePages();
         CreateClickZones();
+    }
+
+    private void PlayPageTurnSound()
+    {
+        if (pageTurnAudioSource == null || pageTurnClip == null)
+        {
+            return;
+        }
+
+        if (randomizePageTurnPitch)
+        {
+            float a = Mathf.Min(minPageTurnPitch, maxPageTurnPitch);
+            float b = Mathf.Max(minPageTurnPitch, maxPageTurnPitch);
+            pageTurnAudioSource.pitch = Random.Range(a, b);
+        }
+        else
+        {
+            pageTurnAudioSource.pitch = 1f;
+        }
+
+        pageTurnAudioSource.PlayOneShot(pageTurnClip, Mathf.Clamp01(pageTurnVolume));
     }
 
     private void Update()
@@ -337,6 +374,7 @@ public class PhysicalRecipeBook : MonoBehaviour
     private IEnumerator TurnPageCoroutine(GameObject page, bool forward, int pageIndex)
     {
         isTurning = true;
+        PlayPageTurnSound();
         
         // Явно используем эйлеровы углы для оси Z (от 0 до 180), чтобы Unity не применял Slerp в обратную сторону или через ось X/Y (что вызывало "странное" листание)
         float startAngle = forward ? 0f : 180f;
