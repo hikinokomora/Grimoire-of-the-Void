@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using GrimoireOfTheVoid.Game;
-
 namespace GrimoireOfTheVoid.Crafting
 {
     /// <summary>
@@ -39,12 +38,22 @@ namespace GrimoireOfTheVoid.Crafting
         [Tooltip("Доп. партиклы «вылет из котла» при дёргании рычага (сброс); проигрываются вместе с дымом, даже если котёл пуст.")]
         [SerializeField] private ParticleSystem[] clearBurstEffects;
 
+        [Tooltip("Опциональная точка спавна VFX (если пусто — используем Spawn Point или позицию котла).")]
+        [SerializeField] private Transform vfxAnchor;
+
+        [Tooltip("Масштаб VFX относительно якоря (1 = как в префабе).")]
+        [SerializeField] [Min(0.001f)] private float vfxScaleMultiplier = 1f;
+
+        [Tooltip("Локальный оффсет поворота VFX (в градусах) относительно якоря. Используй, если префаб изначально 'лежит' (например -90 по X).")]
+        [SerializeField] private Vector3 vfxLocalEulerOffset = Vector3.zero;
+
         // TODO: Переменные для расширения под таймер
         // [SerializeField] private float defaultCraftTime = 2f;
         // private float currentCraftTimer = 0f;
         // private bool isCrafting = false;
 
         private readonly List<Recipe> _runtimeRecipes = new List<Recipe>();
+        private readonly Dictionary<int, ParticleSystem> _vfxPrefabToInstance = new Dictionary<int, ParticleSystem>(16);
 
         private void Awake()
         {
@@ -353,17 +362,68 @@ namespace GrimoireOfTheVoid.Crafting
 
         private void PlayResetVisualEffects()
         {
-            if (resetSmokeEffect != null)
-            {
-                resetSmokeEffect.Play();
-            }
+            PlayOneShotParticles(GetVfxInstance(resetSmokeEffect));
+
             if (clearBurstEffects == null) return;
             for (int i = 0; i < clearBurstEffects.Length; i++)
             {
-                if (clearBurstEffects[i] != null)
-                {
-                    clearBurstEffects[i].Play();
-                }
+                PlayOneShotParticles(GetVfxInstance(clearBurstEffects[i]));
+            }
+        }
+
+        private ParticleSystem GetVfxInstance(ParticleSystem ps)
+        {
+            if (ps == null) return null;
+
+            // If it's already a scene instance, use it directly.
+            if (ps.gameObject.scene.IsValid())
+            {
+                return ps;
+            }
+
+            // It's a prefab asset reference — instantiate and reuse.
+            int key = ps.GetInstanceID();
+            if (_vfxPrefabToInstance.TryGetValue(key, out ParticleSystem inst) && inst != null)
+            {
+                return inst;
+            }
+
+            Transform anchor = vfxAnchor != null ? vfxAnchor : (spawnPoint != null ? spawnPoint : transform);
+            inst = Instantiate(ps, anchor.position, anchor.rotation);
+            inst.name = $"{ps.name}_Instance";
+            // Hard-bind to anchor: position/rotation/scale come from the anchor (no world-space drift).
+            inst.transform.SetParent(anchor, false);
+            inst.transform.localPosition = Vector3.zero;
+            inst.transform.localRotation = Quaternion.Euler(vfxLocalEulerOffset);
+            inst.transform.localScale = Vector3.one * vfxScaleMultiplier;
+            _vfxPrefabToInstance[key] = inst;
+            return inst;
+        }
+
+        private static void PlayOneShotParticles(ParticleSystem ps)
+        {
+            if (ps == null) return;
+
+            // If the effect is disabled in hierarchy, it won't play.
+            if (!ps.gameObject.activeInHierarchy)
+            {
+                ps.gameObject.SetActive(true);
+            }
+
+            // Restart reliably even for non-looping systems.
+            // Also force unscaled time so it still plays when Time.timeScale == 0 (menus / pauses).
+            var main = ps.main;
+            main.useUnscaledTime = true;
+
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            ps.Clear(true);
+            // Simulate() is safe for scene instances; prefab assets are filtered out by GetVfxInstance.
+            ps.Simulate(0f, true, true, true);
+            ps.Play(true);
+
+            if (!ps.isPlaying)
+            {
+                Debug.LogWarning($"[Cauldron] Reset VFX did not start: {ps.name}. Check Renderer, Emission, and that it's not disabled by Stop Action.", ps);
             }
         }
 
