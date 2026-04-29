@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using System.IO;
 
 // if you want to delete this file delete all Gentleland "Utils" folder 
 // you can then delete GentlelandSettings folder too
@@ -15,6 +16,9 @@ namespace Gentleland.Utils.SteampunkUI
 
         public static void OpenWindow()
         {
+            // #region agent log
+            AppendDebugLog("run-build", "H4", "WelcomeWindow.cs:20", "WelcomeWindow.OpenWindow.entry", null);
+            // #endregion
             PackageSettings settings = AssetDatabase.LoadAssetAtPath<PackageSettings>(PackageSettings.PackageSettingsPath);
             
             if (settings == null)
@@ -24,6 +28,9 @@ namespace Gentleland.Utils.SteampunkUI
             }
             if (!settings.isFirstTimeUsingTheAsset)
             {
+                // #region agent log
+                AppendDebugLog("run-build", "H4", "WelcomeWindow.cs:31", "WelcomeWindow.OpenWindow.skip", "isFirstTimeUsingTheAsset=false");
+                // #endregion
                 return;
             }
             WelcomeWindow wnd = GetWindow<WelcomeWindow>(true);
@@ -33,6 +40,9 @@ namespace Gentleland.Utils.SteampunkUI
             settings.isFirstTimeUsingTheAsset = false;
             EditorUtility.SetDirty(settings);
             AssetDatabase.SaveAssets();
+            // #region agent log
+            AppendDebugLog("run-build", "H4", "WelcomeWindow.cs:43", "WelcomeWindow.OpenWindow.opened", "window opened and settings saved");
+            // #endregion
         }
 
         public void OnGUI()
@@ -94,5 +104,19 @@ CEO - Gentleland"
             GUILayout.EndArea();
         }
 
+        private static void AppendDebugLog(string runId, string hypothesisId, string location, string message, string data)
+        {
+            string safeData = (data ?? string.Empty).Replace("\\", "\\\\").Replace("\"", "\\\"");
+            string safeMessage = message.Replace("\\", "\\\\").Replace("\"", "\\\"");
+            string safeLocation = location.Replace("\\", "\\\\").Replace("\"", "\\\"");
+            string payload =
+                "{\"sessionId\":\"54daca\",\"runId\":\"" + runId +
+                "\",\"hypothesisId\":\"" + hypothesisId +
+                "\",\"location\":\"" + safeLocation +
+                "\",\"message\":\"" + safeMessage +
+                "\",\"data\":{\"note\":\"" + safeData +
+                "\"},\"timestamp\":" + System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + "}";
+            File.AppendAllText("debug-54daca.log", payload + "\n");
+        }
     }
 }
