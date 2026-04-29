@@ -13,10 +13,6 @@ public class CardDraw : MonoBehaviour, IInteractable
     [SerializeField]
     private GameObject prefab;
     [SerializeField]
-    private GameObject volumeM;
-    [SerializeField]
-    private GameObject volumeS;
-    [SerializeField]
     private GameObject light;
     [SerializeField]
     private Transform spawnLocation;
@@ -53,24 +49,23 @@ public class CardDraw : MonoBehaviour, IInteractable
         rend.materials = mats;
         light.SetActive(false);
         Invoke(nameof(ResetCooldown), 5f);
-        Invoke(nameof(Apply), 3f);
+        Invoke(nameof(Apply), 4f);
     }
     private void ResetCooldown() { isOnCooldown = false; light.SetActive(true); }
-    private int count = 16;
+
     private void Apply()
     {
-        //string title = "";
+        string title = "";
         string desc = "";
-        count++;
-        switch (count)
+        switch (index)
         {
             case 0: 
-                //title = "Шут";
-                desc = "Что же произошло?";
+                title = "Шут";
+                desc = "Хер тебе, а не бафф";
                 text = "0 Аркан: Шут"; break;
             case 1: 
-                //title = "Маг";
-                desc = "В гримуаре что-то изменилось";
+                title = "Маг";
+                desc = "Раскрывает рецепт случайного аспекта";
                 OccultAspectRegistry.EnsureDefaultFromResources();
                 var recipeList = OccultAspectRegistry.CloneOrderedList();
                 for (int i = recipeList.Count - 1; i >= 0; i--)
@@ -81,8 +76,8 @@ public class CardDraw : MonoBehaviour, IInteractable
                 if (recipeList.Count > 0) OccultAspectRegistry.RevealRecipeAndNotifyUI(recipeList[UnityEngine.Random.Range(0, recipeList.Count)], false);
                 text = "I Аркан: Маг"; break;
             case 2: 
-                //title = "Папесса";
-                desc = "В гримуаре что-то изменилось";
+                title = "Папесса";
+                desc = "Раскрывает иконку рандомного рецепта";
                 OccultAspectRegistry.EnsureDefaultFromResources();
                 var list = OccultAspectRegistry.CloneOrderedList();
                 for (int i = list.Count - 1; i >= 0; i--)
@@ -93,114 +88,108 @@ public class CardDraw : MonoBehaviour, IInteractable
                 if (list.Count > 0) OccultAspectRegistry.RevealImageAndNotifyUI(list[UnityEngine.Random.Range(0, list.Count)], false);
                 text = "II Аркан: Папесса"; break;
             case 3:
-                //title = "Императрица";
-                desc = "Мне не послышалось?";
+                title = "Императрица";
+                desc = "Один из эмбрионов начинает говорить";
                 babe[UnityEngine.Random.Range(0,babe.Length-1)].GetComponent<PlayAudio>().enabled = true;
                 text = "III Аркан: Императрица"; break;
             case 4:
-                //title = "Император";
-                desc = "Кто-то умолк, но кто?";
+                title = "Император";
+                desc = "Один из эмбрионов умирает";
                 babe[UnityEngine.Random.Range(0, babe.Length - 1)].GetComponent<AudioSource>().mute = true;
                 text = "IV Аркан: Император"; break;
             case 5: 
-                //title = "Иерофант";
-                desc = "Срочно к гримуару!";
+                title = "Иерофант";
+                desc = "Пару секунд все крафты известны";
                 OccultAspectRegistry.RevealAllForSecondsAndNotifyUI(30f);
                 text = "V Аркан: Иерофант"; break;
             case 6:
-                //title = "Влюблённые";
-                desc = "Ох чёрт!";
+                title = "Влюблённые";
+                desc = "Появляются тентакли (блок прохода)";
                 tentacles.SetActive(true);
                 Invoke(nameof(RemoveTentackles), 210f);
                 text = "VI Аркан: Влюблённые"; break;
             case 7:
-                //title = "Колесница";
-                desc = "Какая лёгкость!";
+                title = "Колесница";
+                desc = "Скорость передвижения х2";
                 ApplySpeedMultiplier(2f, 100f);
                 text = "VII Аркан: Колесница"; break;
             case 8: 
-                //title = "Сила";
-                desc = "The world!";
+                title = "Сила";
+                desc = "Время течёт медленнее";
                 ApplyTimeRateMultiplier(0.6f, 90f);
                 text = "VIII Аркан: Сила"; break;
             case 9: 
-                //title = "Отшельник";
-                desc = "Появилось некое чувство безопасности";
+                title = "Отшельник";
+                desc = "1 неправильный крафт без наказания";
                 GayDirect.GetComponent<GameDirector>().GrantIgnoreWrongDeliveryOnce();
                 text = "IX Аркан: Отшельник"; break;
             case 10: 
-                //title = "Колесо фортуны";
-                desc = "Фортуна на моей стороне";
+                title = "Колесо фортуны";
+                desc = "Дебафф не выпадает(шут) ближайшие 5 траев";
                 isFart = true;
                 Invoke(nameof(UnFart), 400f);
                 text = "X Аркан: Колесо фортуны"; break;
             case 11:
-                //title = "Правосудие";
-                desc = "Какая тяжесть в теле";
+                title = "Правосудие";
+                desc = "Скорость передвижения х0.5";
                 ApplySpeedMultiplier(0.5f, 100f);
                 text = "XI Аркан: Правосудие"; break;
             case 12:
-                //title = "Повешенный";
-                desc = "Надо поспешить!";
+                title = "Повешенный";
+                desc = "Время теряется";
                 GayDirect.GetComponent<GameDirector>().AddTime(-30);
                 text = "XII Аркан: Повешенный"; break;
             case 13: 
-                //title = "Смерть";
-                //desc = "Мгновенная смерть";
+                title = "Смерть";
+                desc = "Мгновенная смерть";
                 GayDirect.GetComponent<GameDirector>().SetTimeRemaining(0f);
                 text = "XIII Аркан: Смерть"; break;
             case 14:
-                //title = "Умеренность";
-                desc = "Можно слегка расслабится";
+                title = "Умеренность";
+                desc = "Время даётся";
                 GayDirect.GetComponent<GameDirector>().AddTime(30);
                 text = "XIV Аркан: Умеренность"; break;
             case 15: 
-                //title = "Дьявол";
-                desc = "Хочется схватить ценный компонент";
+                title = "Дьявол";
+                desc = "Копия имеющегося компонента, но следующий запрос тир +1";
                 CraftingInteractor.RequestCopyNextClickedAspect();
                 GayDirect.GetComponent<GameDirector>().ForceNextGoalTierBumpOnce();
                 text = "XV Аркан: Дьявол"; break;
             case 16:Var1.SetActive(isVar1);
                 isVar1=!isVar1;
                 Var2.SetActive(isVar1);
-                //title = "Башня";
-                desc = "Что-то здесь изменилось";
+                title = "Башня";
+                desc = "Переставляем оборудование";
                 text = "XVI Аркан: Башня"; break;
             case 17: 
-                //title = "Звезда";
-                desc = "Жить стало полегче";
+                title = "Звезда";
+                desc = "Тир запроса -1";
                 GayDirect.GetComponent<GameDirector>().ForceNextGoalTierLowerOnce();
                 text = "XVII Аркан: Звезда"; break;
-            case 18:
-                volumeM.SetActive(true);
-                Invoke(nameof(RemoveVolumeM), 90f);
-                //title = "Луна";
-                desc = "Что за?..";
+            case 18: 
+                title = "Луна";
+                desc = "Следующих запросов 2, только один настоящий";
                 text = "XVIII Аркан: Луна"; break;
-            case 19:
-                volumeS.SetActive(true);
-                Invoke(nameof(RemoveVolumeS), 110f);
-                //title = "Солнце";
-                desc = "Мои глаза!";
+            case 19: 
+                title = "Солнце";
+                desc = "FlashBang и всё сгнило";
                 text = "XIX Аркан: Солнце"; break;
             case 20: 
-                //title = "Суд";
-                desc = "Чувствую, в следующий раз меня простят";
+                title = "Суд";
+                desc = "Доп жизнь";
                 GayDirect.GetComponent<GameDirector>().GrantExtraLifeOnTimeoutOnce();
                 text = "XX Аркан: Суд"; break;
             case 21: 
-                //title = "Мир";
-                desc = "Наконец-то!";
+                title = "Мир";
+                desc = "Даёт возможность закончить игру (висит над столом компонентов)";
                 GayDirect.GetComponent<GameDirector>().MarkWorldCardDrawn();
                 text = "XXI Аркан: Мир"; break;
         }
-        OnCardInfo?.Invoke(text, desc);
+        OnCardInfo?.Invoke(title, desc);
         
     }
 
     private void RemoveTentackles() { tentacles.SetActive(false); }
-    private void RemoveVolumeM() { volumeM.SetActive(false); }
-    private void RemoveVolumeS() { volumeS.SetActive(false); }
     private void ApplySpeedMultiplier(float mult, float seconds)
     {
         var player = GameObject.FindGameObjectWithTag("Player");

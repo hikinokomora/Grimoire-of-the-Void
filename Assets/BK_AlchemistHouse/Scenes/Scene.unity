@@ -2488,7 +2488,7 @@ Light:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingLayerMask: 1
-  m_Lightmapping: 4
+  m_Lightmapping: 2
   m_LightShadowCasterMode: 2
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 1
@@ -2683,8 +2683,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -615.9, y: 496.60004}
-  m_SizeDelta: {x: 650, y: 50}
+  m_AnchoredPosition: {x: -853.9, y: 509}
+  m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &28405682
 MonoBehaviour:
@@ -2708,8 +2708,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 791ad33f2cf0dfa4197d7cda88d3023e, type: 2}
-  m_sharedMaterial: {fileID: -2107133402197465149, guid: 791ad33f2cf0dfa4197d7cda88d3023e, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 600de2640e823404bb01da730ba3b804, type: 2}
+  m_sharedMaterial: {fileID: 7555470778337393706, guid: 600de2640e823404bb01da730ba3b804, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -2733,13 +2733,13 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 60
-  m_fontSizeBase: 60
+  m_fontSize: 50
+  m_fontSizeBase: 50
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
-  m_fontStyle: 1
+  m_fontStyle: 0
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 256
   m_textAlignment: 65535
@@ -16702,55 +16702,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 265294896}
   m_Mesh: {fileID: 4300000, guid: afe46ecfa133d1a458dd53086810a6e9, type: 3}
---- !u!1 &267059440
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 267059442}
-  - component: {fileID: 267059441}
-  m_Layer: 0
-  m_Name: SunVolume
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &267059441
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 267059440}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
-  m_IsGlobal: 1
-  priority: 50
-  blendDistance: 0
-  weight: 1
-  sharedProfile: {fileID: 11400000, guid: 0df359e1bde9b2642beef29f4eee45bd, type: 2}
---- !u!4 &267059442
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 267059440}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &271587366
 GameObject:
   m_ObjectHideFlags: 0
@@ -31974,8 +31925,7 @@ PrefabInstance:
       propertyPath: m_LocalRotation.z
       value: -0
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 54897151525161516, guid: 15335e2ad9ea18540983fcec49298ce9, type: 3}
+    m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -51629,12 +51579,12 @@ GameObject:
   - component: {fileID: 810937505}
   - component: {fileID: 810937504}
   m_Layer: 0
-  m_Name: MoonVolume
+  m_Name: GlobalVolume_GrimoireStyle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &810937504
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -79516,6 +79466,7 @@ GameObject:
   - component: {fileID: 1280050542}
   - component: {fileID: 1280050541}
   - component: {fileID: 1280050540}
+  - component: {fileID: 1280050539}
   m_Layer: 0
   m_Name: Flask07 (4)
   m_TagString: Untagged
@@ -79538,6 +79489,33 @@ Transform:
   m_Children: []
   m_Father: {fileID: 275806644}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: -180.00002}
+--- !u!54 &1280050539
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1280050537}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!64 &1280050540
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -81805,7 +81783,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -793.7, y: 411}
+  m_AnchoredPosition: {x: -853.9, y: 444.3}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1327269368
@@ -81830,8 +81808,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 791ad33f2cf0dfa4197d7cda88d3023e, type: 2}
-  m_sharedMaterial: {fileID: -2107133402197465149, guid: 791ad33f2cf0dfa4197d7cda88d3023e, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 600de2640e823404bb01da730ba3b804, type: 2}
+  m_sharedMaterial: {fileID: 7555470778337393706, guid: 600de2640e823404bb01da730ba3b804, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -85661,18 +85639,6 @@ PrefabInstance:
     - target: {fileID: 4653786702808938, guid: fb71d571078e952469f83dcc9bb68890, type: 3}
       propertyPath: m_LocalRotation.z
       value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 108460654045448504, guid: fb71d571078e952469f83dcc9bb68890, type: 3}
-      propertyPath: m_Color.b
-      value: 0.7433963
-      objectReference: {fileID: 0}
-    - target: {fileID: 108460654045448504, guid: fb71d571078e952469f83dcc9bb68890, type: 3}
-      propertyPath: m_Color.g
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 108460654045448504, guid: fb71d571078e952469f83dcc9bb68890, type: 3}
-      propertyPath: m_Color.r
-      value: 0.17413567
       objectReference: {fileID: 0}
     - target: {fileID: 108460654045448504, guid: fb71d571078e952469f83dcc9bb68890, type: 3}
       propertyPath: m_Enabled
@@ -106407,7 +106373,7 @@ MonoBehaviour:
   victoryAfterFirstCraft: 0
   autoCompleteGoalOnCraft: 0
   baseTimePerTier:
-  - 1000
+  - 60
   - 90
   - 120
   - 180
@@ -112122,8 +112088,7 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 2ca3ead0e23b3ef4b8d3f37196f380fd, type: 2}
-    m_RemovedComponents:
-    - {fileID: 54243892154557376, guid: 5b9389545005b8245bd30314aa7807c6, type: 3}
+    m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -129903,6 +129868,7 @@ GameObject:
   - component: {fileID: 2052580330}
   - component: {fileID: 2052580329}
   - component: {fileID: 2052580328}
+  - component: {fileID: 2052580327}
   m_Layer: 0
   m_Name: Oillamp01_on
   m_TagString: Untagged
@@ -129926,6 +129892,33 @@ Transform:
   - {fileID: 1209938968}
   m_Father: {fileID: 275806644}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!54 &2052580327
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2052580325}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!64 &2052580328
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -136210,4 +136203,3 @@ SceneRoots:
   - {fileID: 1991959974}
   - {fileID: 709178399}
   - {fileID: 810937505}
-  - {fileID: 267059442}
