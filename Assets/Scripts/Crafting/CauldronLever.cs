@@ -13,6 +13,15 @@ namespace GrimoireOfTheVoid.Crafting
         [Tooltip("Ссылка на контроллер котла, который нужно очищать.")]
         [SerializeField] private CauldronController cauldron;
 
+        [Header("Audio")]
+        [Tooltip("AudioSource для звука рычага. Если пусто — возьмётся с этого объекта или добавится автоматически.")]
+        [SerializeField] private AudioSource pullAudioSource;
+        [SerializeField] private AudioClip pullAudioClip;
+        [SerializeField] [Range(0f, 1f)] private float pullAudioVolume = 0.8f;
+        [SerializeField] private bool randomizePullPitch = true;
+        [SerializeField] [Min(0.01f)] private float minPullPitch = 0.95f;
+        [SerializeField] [Min(0.01f)] private float maxPullPitch = 1.05f;
+
         [Header("Анимация (один клип дёргания — idle не нужен)")]
         [Tooltip("Animator на рычаге. Можно оставить пустым: возьмётся с этого объекта или с дочерних.")]
         [SerializeField] private Animator leverAnimator;
@@ -30,6 +39,10 @@ namespace GrimoireOfTheVoid.Crafting
 
         private void Reset()
         {
+            if (pullAudioSource == null)
+            {
+                pullAudioSource = GetComponent<AudioSource>();
+            }
             if (leverAnimator == null)
             {
                 leverAnimator = GetComponent<Animator>();
@@ -42,6 +55,16 @@ namespace GrimoireOfTheVoid.Crafting
 
         private void Awake()
         {
+            if (pullAudioSource == null)
+            {
+                pullAudioSource = GetComponent<AudioSource>();
+            }
+            if (pullAudioSource == null)
+            {
+                pullAudioSource = gameObject.AddComponent<AudioSource>();
+                pullAudioSource.playOnAwake = false;
+            }
+
             if (leverAnimator == null)
             {
                 leverAnimator = GetComponent<Animator>();
@@ -101,6 +124,21 @@ namespace GrimoireOfTheVoid.Crafting
         public void Pull()
         {
             Debug.Log("[Lever] Игрок дёрнул рычаг!");
+
+            if (pullAudioSource != null && pullAudioClip != null)
+            {
+                if (randomizePullPitch)
+                {
+                    float a = Mathf.Min(minPullPitch, maxPullPitch);
+                    float b = Mathf.Max(minPullPitch, maxPullPitch);
+                    pullAudioSource.pitch = Random.Range(a, b);
+                }
+                else
+                {
+                    pullAudioSource.pitch = 1f;
+                }
+                pullAudioSource.PlayOneShot(pullAudioClip, Mathf.Clamp01(pullAudioVolume));
+            }
 
             if (leverAnimator != null)
             {
